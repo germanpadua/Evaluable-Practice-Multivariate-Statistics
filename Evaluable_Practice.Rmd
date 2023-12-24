@@ -1,0 +1,572 @@
+---
+title: "Evaluable Practice"
+author: "Pedro Jiménez García-Ligero, Álvaro Luna Ramírez, Nerea Alberdi Arrillaga and Germán José Padua Pleguezuelo"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: 6
+    number_sections: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+  word_document:
+    toc: yes
+    toc_depth: '6'
+  pdf_document: default
+---
+<style>
+.math {
+  font-size: 8.25pt;options(encoding = 'UTF-8')
+}
+</style>
+
+<div style="text-align: justify">
+
+© This material is licensed under a **Creative Commons CC BY-NC-ND** attribution which allows *works to be downloaded and shared with others, as long as they are referenced, but may not be modified in any way or used commercially*.
+
+
+# Index
+FALTA
+
+# Introduction
+FALTA
+
+
+**Loading/installation** of R packages necessary for this practice.
+
+The following source code module is responsible for loading, if they are already installed, all the packages that will be used in this R session.
+
+
+```{r warning=FALSE, message=FALSE}
+
+#########################################
+# Loading necessary packages and reason #
+#########################################
+
+# Package required to call 'ggplot' function
+library(ggplot2)
+
+# Package required to call 'ggarrange' function
+library(ggpubr)
+
+# Package required to call 'scatterplot3d' function
+library(scatterplot3d)
+
+# Package required to call 'melt' function
+library(reshape2)
+
+# Package required to call 'mvn' function
+library(MVN)
+
+# Package required to call 'boxM' function
+library(biotools)
+
+# Package required to call 'partimat' function
+library(klaR)
+
+# Package required to call 'summarise' function
+library(dplyr)
+
+# Package required to call 'createDataPartition' function
+library(caret)
+
+# Package required to call 'freq' and 'descr' functions (descriptive statistics)
+library(summarytools)
+
+# Package required to call 'ggplot' function (graphical tools)
+library(ggplot2)
+
+# Package required to call 'ggarrange' function (graphical tools)
+library(ggpubr)
+
+# Package required to call 'read.spss' function (loading '.spss' data format)
+library(foreign)
+
+# Package required to call 'read_xlsx' function (loading '.xlsx' data format)
+library(readxl)
+
+# Package required to load the data set 'RBGlass1'
+library(archdata)
+
+# Package required to call 'cortest.bartlett' function
+library(psych)
+
+# Package required to call 'fviz_pca_var, fviz_pca_ind and fviz_pca' functions
+library(factoextra)
+
+# Package required to call 'scatterplot3d' function
+library(scatterplot3d)
+```
+
+
+```{r warning=FALSE, message=FALSE}
+
+# Loading the .csv file
+# The output of this function is already a data.frame object
+data_train<-read.csv("train.csv", header = TRUE,sep =",", fileEncoding = "UTF-8")
+data_test<-read.csv("test.csv", header = TRUE, sep = ",", fileEncoding = "UTF-8")
+
+```
+
+
+# ** Univariate exploratory analysis**
+
+In this phase it is recommended to carry out a preiminary exploratory analysis of the data. To do this, apply the different numerical nd graphical techniques used in class. At first, it will focus on the analysis of each variable independently without yet looking for possible interactions between them. It is recommended to perform numerical and graphical analysis of each variable, to detect: data groupings, missing values, classical numeric descriptive analysis, extreme values, assumption of normality. 
+
+```{r warning=FALSE, message=FALSE}
+
+# This line loads the variable names from this data.frame
+# So that we can access by their name with no refer to the data.frame identifier
+attach(data_train)
+
+# We will only select 13 variables for our study
+data_train <- data_train[, c(
+  "MSSubClass",
+  "MSZoning",
+  "LotFrontage",
+  "LotArea",
+  "OverallQual",
+  "OverallCond",
+  "YearBuilt",
+  "ExterQual",
+  "ExterCond",
+  "GarageQual",
+  "GrLivArea",
+  "X1stFlrSF",
+  "X2ndFlrSF",
+  "YrSold",
+  "SaleType",
+  "SaleCondition",
+  "SalePrice"
+)]
+
+
+# Retrieving the name of the selected variables
+colnames(data_train)
+
+# Displaying a few records
+head(data_train)
+
+```
+
+
+
+```{r warning=FALSE, message=FALSE}
+
+# Show the number of NA's values per column
+na_counts <- colMeans(is.na(data_train))
+
+print(na_counts)
+
+```
+
+
+
+MSSubClass: Identifies the type of dwelling involved in the sale.
+
+
+```{r warning=FALSE, message=FALSE}
+# Classical numeric descriptive analysis
+describe(MSSubClass)
+
+# Histogram and density plots
+# Remember that package 'ggplot2' is required
+p1<-ggplot(data_train,aes(x=MSSubClass))+geom_density()+
+  labs(title = "Density of MSSubClass",x="MSSubClass",y="Values")
+
+p2<-ggplot(data_train,aes(x=MSSubClass))+geom_histogram()+
+  labs(title = "Histogram of MSSubClass",x="MSSubClass",y="Values")
+
+
+# This function controls the graphical output device
+# Remember that package 'ggpubr' is required
+ggarrange(p1,p2, nrow=1, common.legend = FALSE)
+
+```  
+
+
+```{r warning=FALSE, message=FALSE}
+# Missing Values
+
+na_counts <- sum(is.na(data_train$MSSubClass))
+
+print(na_counts)
+
+```    
+ No missing values.
+ 
+ 
+Outliers
+
+```{r warning=FALSE, message=FALSE}
+
+# Boxplot to visualize outliers
+p1 <- ggplot(data_train, aes(x = MSSubClass)) +
+  geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
+  coord_flip() +
+  labs(title = "Boxplot of densidad", x = "Values", y = "")
+
+# Count outliers
+outliers <- boxplot.stats(data_train$MSSubClass)$out
+
+# Display the count of outliers
+cat("Number of outliers:", length(outliers), "\n")
+
+# Identify rows with outliers
+outlier_rows <- which(data_train$MSSubClass %in% outliers)
+
+# Print the indices of rows with outliers
+cat("Indices of rows with outliers:", outlier_rows, "\n")
+
+
+
+```    
+  
+There are 103 outliers, as there enough data records, we will eliminate them.
+
+
+```{r warning=FALSE, message=FALSE}
+
+# Remove rows with outliers
+data_train <- data_train[-outlier_rows, ]
+
+# Print a message after removing outliers
+cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
+
+``` 
+
+
+**Assumption of Normality**
+
+```{r warning=FALSE, message=FALSE}
+
+# Histogram representation of the column MSSubClass
+par(mfcol = c(1, 1))
+
+# Define the column name
+j0 <- "MSSubClass"
+
+# Set the sequence for the x-axis
+x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+
+# Create a histogram for the entire column
+hist(data_train[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
+
+# Overlay normal distribution curve
+lines(x0, dnorm(x0, mean(data_train[, j0], na.rm = TRUE), sd(data_train[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
+
+
+``` 
+
+
+**Qqplot graphics**
+
+```{r warning=FALSE, message=FALSE}
+# Representation of normal quantiles for the column MSSubClass
+par(mfrow = c(1, 1))
+
+# Define the column name
+j0 <- "MSSubClass"
+
+# Set the sequence for the x-axis
+x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+
+# Create a quantile-quantile plot
+qqnorm(data_train[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
+qqline(data_train[, j0])
+
+
+```
+  
+  
+This exploratory analysis can give us an idea of the possible normal distribution of the univariate variables, but it is always better to do the respective normality tests.
+
+**Univariate normality test (Shapiro-Wilk)**
+
+The **null hypothesis** that the data **follow a univariate normal distribution** is tested. This hypothesis is **rejected** if the **p-value** given by the Shapiro-Wilk test is **less than 0.05**. Otherwise the assumption of normality of the data is not rejected.
+
+```{r warning=FALSE, message=FALSE}
+
+# Assuming 'data_train' is your original data frame
+data_train_tidy <- melt(data_train, value.name = "value")
+
+# Use the aggregate function with the correct FUN argument
+result <- aggregate(value ~ variable, data = data_train_tidy,
+                    FUN = function(x) shapiro.test(x)$p.value)
+
+# Print the row corresponding to MSSubClass
+print(subset(result, variable == "MSSubClass"))
+
+```
+
+**There is evidence of lack of univariate normality**  (p-value < 0.05).
+
+
+MSZoning : Identifies the general zoning classification of the sale.
+It is a categorical variable
+
+```{r warning=FALSE, message=FALSE}
+
+# Basic descriptive statistics
+# Remember that package 'summarytools' is required
+freq(MSZoning)
+
+# Pie chart and bar graph
+p1<-ggplot(data_train, aes(x=factor(1), fill = MSZoning))+geom_bar()+
+  coord_polar("y")+labs(x="MSZoning",y="%")
+p2<-ggplot(data_train, aes(x=factor(1), fill = MSZoning))+geom_bar()+
+  labs(x="MSZoning",y="%")
+
+# This function controls the graphical output device
+# Remember that package 'ggpubr' is required
+ggarrange(p1,p2,nrow = 1,ncol=2, common.legend = TRUE)
+
+```
+
+There aren't any missing values, so we will continue with the next variable. 
+
+LotFrontage : Linear feet of street connected to property
+
+```{r warning=FALSE, message=FALSE}
+# Classical numeric descriptive analysis
+describe(LotFrontage)
+
+# Histogram and density plots
+# Remember that package 'ggplot2' is required
+p1<-ggplot(data_train,aes(x=LotFrontage))+geom_density()+
+  labs(title = "Density of LotFrontage",x="LotFrontage",y="Values")
+
+p2<-ggplot(data_train,aes(x=MSSubClass))+geom_histogram()+
+  labs(title = "Histogram of LotFrontage",x="LotFrontage",y="Values")
+
+
+# This function controls the graphical output device
+# Remember that package 'ggpubr' is required
+ggarrange(p1,p2, nrow=1, common.legend = FALSE)
+
+```  
+
+
+```{r warning=FALSE, message=FALSE}
+# Missing Values
+
+na_counts <- sum(is.na(data_train$LotFrontage))
+
+print(na_counts)
+print(na_counts/nrow(data_train))
+
+```    
+ 259 missing values -> 17.74%
+ 
+ It is a continuous variable, so we will analyze the random pattern with a Student test
+ 
+
+```{r warning=FALSE, message=FALSE}
+
+# Create a subset for non-missing values
+non_missing_values <- data_train$LotFrontage[!is.na(data_train$LotFrontage)]
+
+# Perform a t-test for continuous variables
+result <- t.test(non_missing_values, data_train$LotFrontage, alternative = "two.sided")
+print(paste("Variable: LotFrontage"))
+print(result)
+
+
+```
+
+
+    Null Hypothesis (H0): The null hypothesis in a t-test is that there is no significant difference between the means of the two groups.
+
+    Alternative Hypothesis (H1): The alternative hypothesis is that the true difference in means is not equal to 0.
+
+    t-statistic: The t-value is 0. The t-value measures the difference between the means of the two groups relative to the variability in the data. A t-value of 0 suggests that there is no significant difference between the means.
+
+    Degrees of Freedom (df): The degrees of freedom for the Welch Two Sample t-test is 2216.
+
+    p-value: The p-value is 1. This is the probability of observing a t-statistic as extreme as the one computed from the sample, assuming that the null hypothesis is true. A p-value of 1 suggests that there is no evidence to reject the null hypothesis.
+
+    Confidence Interval: The 95 percent confidence interval for the difference in means is from -1.890914 to 1.890914. This interval contains 0, further supporting the idea that there is no significant difference between the means.
+
+    Interpretation: In summary, based on the provided p-value (1), we fail to reject the null hypothesis. There is no significant evidence to suggest that the means of the two groups (missing and non-missing values of LotFrontage) are different. The confidence interval includes 0, reinforcing the lack of a significant difference.
+
+
+  In the case of homogeneity the pattern is random and, in this case, it is chosen to
+replace the NA with the mean
+
+
+```{r warning=FALSE, message=FALSE}
+
+# Calculate the mean of non-missing values
+mean_lot_frontage <- mean(data_train$LotFrontage, na.rm = TRUE)
+
+# Replace missing values with the mean
+data_train$LotFrontage[is.na(data_train$LotFrontage)] <- mean_lot_frontage
+
+na_counts <- sum(is.na(data_train$LotFrontage))
+
+print(na_counts)
+print(na_counts/nrow(data_train))
+
+```
+
+
+ 
+Outliers
+
+```{r warning=FALSE, message=FALSE}
+
+# Boxplot to visualize outliers
+p1 <- ggplot(data_train, aes(x = LotFrontage)) +
+  geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
+  coord_flip() +
+  labs(title = "Boxplot of LotFrontage", x = "Values", y = "")
+
+ggarrange(p1, nrow=1, common.legend = FALSE)
+
+# Count outliers
+outliers <- boxplot.stats(data_train$LotFrontage)$out
+
+# Display the count of outliers
+cat("Number of outliers:", length(outliers), "\n")
+
+# Identify rows with outliers
+outlier_rows <- which(data_train$LotFrontage %in% outliers)
+
+# Print the indices of rows with outliers
+cat("Indices of rows with outliers:", outlier_rows, "\n")
+
+```    
+  
+There are 47 outliers, as there enough data records, we will eliminate them.
+
+```{r warning=FALSE, message=FALSE}
+
+# Remove rows with outliers
+data_train <- data_train[-outlier_rows, ]
+
+# Print a message after removing outliers
+cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
+
+```  
+
+
+**Assumption of Normality**
+
+```{r warning=FALSE, message=FALSE}
+
+# Histogram representation of the column MSSubClass
+par(mfcol = c(1, 1))
+
+# Define the column name
+j0 <- "LotFrontage"
+
+# Set the sequence for the x-axis
+x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+
+# Create a histogram for the entire column
+hist(data_train[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
+
+# Overlay normal distribution curve
+lines(x0, dnorm(x0, mean(data_train[, j0], na.rm = TRUE), sd(data_train[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
+
+
+``` 
+
+
+**Qqplot graphics**
+
+```{r warning=FALSE, message=FALSE}
+# Representation of normal quantiles for the column MSSubClass
+par(mfrow = c(1, 1))
+
+# Define the column name
+j0 <- "LotFrontage"
+
+# Set the sequence for the x-axis
+x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+
+# Create a quantile-quantile plot
+qqnorm(data_train[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
+qqline(data_train[, j0])
+
+
+```
+  
+  
+This exploratory analysis can give us an idea of the possible normal distribution of the univariate variables, but it is always better to do the respective normality tests.
+
+**Univariate normality test (Shapiro-Wilk)**
+
+The **null hypothesis** that the data **follow a univariate normal distribution** is tested. This hypothesis is **rejected** if the **p-value** given by the Shapiro-Wilk test is **less than 0.05**. Otherwise the assumption of normality of the data is not rejected.
+
+```{r warning=FALSE, message=FALSE}
+
+# Assuming 'data_train' is your original data frame
+data_train_tidy <- melt(data_train, value.name = "value")
+
+# Use the aggregate function with the correct FUN argument
+result <- aggregate(value ~ variable, data = data_train_tidy,
+                    FUN = function(x) shapiro.test(x)$p.value)
+
+# Print the row corresponding to LotFrontage
+print(subset(result, variable == "LotFrontage"))
+
+```
+
+**There is evidence of lack of univariate normality**  (p-value < 0.05).
+
+
+LotArea: Lot size in square feet
+
+
+
+OverallQual: Rates the overall material and finish of the house (1 - Very Poor , 10 - Very Excellent)
+
+
+
+OverallCond: Rates the overall condition of the house (1 - Very Poor , 10 - Very Excellent)
+
+
+
+YearBuilt: Original construction date
+
+
+
+ExterQual: Evaluates the quality of the material on the exterior
+
+
+
+ExterCond: Evaluates the present condition of the material on the exterior
+
+
+  
+GarageQual: Garage quality
+
+
+
+GrLivArea: Above grade (ground) living area square feet
+
+
+
+X1stFlrSF: First Floor square feet
+
+
+
+X2ndFlrSF: Second floor square feet
+
+
+
+YrSold: Year Sold (YYYY)
+
+
+
+SaleType: Type of sale
+
+
+
+SaleCondition: Condition of sale
+
+
+SalePrice
