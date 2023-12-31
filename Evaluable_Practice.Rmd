@@ -31,7 +31,7 @@ output:
 FALTA
 
 # Introduction
-FALTA
+german guapo
 
 
 **Loading/installation** of R packages necessary for this practice.
@@ -113,7 +113,7 @@ data_test<-read.csv("test.csv", header = TRUE, sep = ",", fileEncoding = "UTF-8"
 
 # ** Univariate exploratory analysis**
 
-In this phase it is recommended to carry out a preiminary exploratory analysis of the data. To do this, apply the different numerical nd graphical techniques used in class. At first, it will focus on the analysis of each variable independently without yet looking for possible interactions between them. It is recommended to perform numerical and graphical analysis of each variable, to detect: data groupings, missing values, classical numeric descriptive analysis, extreme values, assumption of normality. 
+In this phase it is recommended to carry out a preliminary exploratory analysis of the data. To do this, apply the different numerical and graphical techniques used in class. At first, it will focus on the analysis of each variable independently without yet looking for possible interactions between them. It is recommended to perform numerical and graphical analysis of each variable, to detect: data groupings, missing values, classical numeric descriptive analysis, extreme values, assumption of normality. 
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -338,7 +338,7 @@ describe(LotFrontage)
 p1<-ggplot(data_train,aes(x=LotFrontage))+geom_density()+
   labs(title = "Density of LotFrontage",x="LotFrontage",y="Values")
 
-p2<-ggplot(data_train,aes(x=MSSubClass))+geom_histogram()+
+p2<-ggplot(data_train,aes(x=LotFrontage))+geom_histogram()+
   labs(title = "Histogram of LotFrontage",x="LotFrontage",y="Values")
 
 
@@ -520,21 +520,569 @@ print(subset(result, variable == "LotFrontage"))
 
 LotArea: Lot size in square feet
 
+```{r warning=FALSE, message=FALSE}
+# Classical numeric descriptive analysis
+describe(LotArea)
+
+# Histogram and density plots
+# Remember that package 'ggplot2' is required
+p1<-ggplot(data_train,aes(x=LotArea))+geom_density()+
+  labs(title = "Density of LotArea",x="LotArea",y="Values")
+
+p2<-ggplot(data_train,aes(x=LotArea))+geom_histogram()+
+  labs(title = "Histogram of LotArea",x="LotArea",y="Values")
+
+
+# This function controls the graphical output device
+# Remember that package 'ggpubr' is required
+ggarrange(p1,p2, nrow=1, common.legend = FALSE)
+
+``` 
+
+```{r warning=FALSE, message=FALSE}
+# Missing Values
+
+na_counts <- sum(is.na(data_train$LotArea))
+
+print(na_counts)
+print(na_counts/nrow(data_train))
+
+```    
+ 0 missing values -> 0%
+ 
+ Outliers
+
+```{r warning=FALSE, message=FALSE}
+# Boxplot to visualize outliers
+p1 <- ggplot(data_train, aes(x = LotArea)) +
+  geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
+  coord_flip() +
+  labs(title = "Boxplot of LotArea", x = "Values", y = "")
+
+ggarrange(p1, nrow=1, common.legend = FALSE)
+
+# Count outliers
+outliers <- boxplot.stats(data_train$LotArea)$out
+
+# Display the count of outliers
+cat("Number of outliers:", length(outliers), "\n")
+
+# Identify rows with outliers
+outlier_rows <- which(data_train$LotArea %in% outliers)
+
+# Print the indices of rows with outliers
+cat("Indices of rows with outliers:", outlier_rows, "\n")
+
+``` 
+
+There are 68 outliers, as there enough data records, we will eliminate them.
+
+```{r warning=FALSE, message=FALSE}
+
+# Remove rows with outliers
+data_train <- data_train[-outlier_rows, ]
+
+# Print a message after removing outliers
+cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
+
+```
+
+**Assumption of Normality**
+
+```{r warning=FALSE, message=FALSE}
+
+# Histogram representation of the column LotArea
+par(mfcol = c(1, 1))
+
+# Define the column name
+j0 <- "LotArea"
+
+# Set the sequence for the x-axis
+x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+
+# Create a histogram for the entire column
+hist(data_train[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
+
+# Overlay normal distribution curve
+lines(x0, dnorm(x0, mean(data_train[, j0], na.rm = TRUE), sd(data_train[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
+
+
+``` 
+
+**Qqplot graphics**
+
+```{r warning=FALSE, message=FALSE}
+# Representation of normal quantiles for the column LotArea
+par(mfrow = c(1, 1))
+
+# Define the column name
+j0 <- "LotArea"
+
+# Set the sequence for the x-axis
+x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+
+# Create a quantile-quantile plot
+qqnorm(data_train[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
+qqline(data_train[, j0])
+
+
+```
+
+This exploratory analysis can give us an idea of the possible normal distribution of the univariate variables, but it is always better to do the respective normality tests.
+
+**Univariate normality test (Shapiro-Wilk)**
+
+The **null hypothesis** that the data **follow a univariate normal distribution** is tested. This hypothesis is **rejected** if the **p-value** given by the Shapiro-Wilk test is **less than 0.05**. Otherwise the assumption of normality of the data is not rejected.
+
+```{r warning=FALSE, message=FALSE}
+
+# Assuming 'data_train' is your original data frame
+data_train_tidy <- melt(data_train, value.name = "value")
+
+# Use the aggregate function with the correct FUN argument
+result <- aggregate(value ~ variable, data = data_train_tidy,
+                    FUN = function(x) shapiro.test(x)$p.value)
+
+# Print the row corresponding to LotArea
+print(subset(result, variable == "LotArea"))
+
+```
+
+**There is evidence of lack of univariate normality**  (p-value < 0.05).
 
 
 OverallQual: Rates the overall material and finish of the house (1 - Very Poor , 10 - Very Excellent)
+
+```{r warning=FALSE, message=FALSE}
+# Classical numeric descriptive analysis
+describe(OverallQual)
+
+# Histogram and density plots
+# Remember that package 'ggplot2' is required
+p1<-ggplot(data_train,aes(x=OverallQual))+geom_density()+
+  labs(title = "Density of OverallQual",x="OverallQual",y="Values")
+
+p2<-ggplot(data_train,aes(x=OverallQual))+geom_histogram()+
+  labs(title = "Histogram of OverallQual",x="OverallQual",y="Values")
+
+
+# This function controls the graphical output device
+# Remember that package 'ggpubr' is required
+ggarrange(p1,p2, nrow=1, common.legend = FALSE)
+
+```  
+
+```{r warning=FALSE, message=FALSE}
+# Missing Values
+
+na_counts <- sum(is.na(data_train$OverallQual))
+
+print(na_counts)
+
+``` 
+
+No missing values.
+ 
+ 
+Outliers
+
+```{r warning=FALSE, message=FALSE}
+
+# Boxplot to visualize outliers
+p1 <- ggplot(data_train, aes(x = OverallQual)) +
+  geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
+  coord_flip() +
+  labs(title = "Boxplot of densidad", x = "Values", y = "")
+
+# Count outliers
+outliers <- boxplot.stats(data_train$OverallQual)$out
+
+# Display the count of outliers
+cat("Number of outliers:", length(outliers), "\n")
+
+# Identify rows with outliers
+outlier_rows <- which(data_train$OverallQual %in% outliers)
+
+# Print the indices of rows with outliers
+cat("Indices of rows with outliers:", outlier_rows, "\n")
+
+
+
+```    
+  
+There are 2 outliers, as there enough data records, we will eliminate them.
+
+```{r warning=FALSE, message=FALSE}
+
+# Remove rows with outliers
+data_train <- data_train[-outlier_rows, ]
+
+# Print a message after removing outliers
+cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
+
+``` 
+
+
+**Assumption of Normality**
+
+```{r warning=FALSE, message=FALSE}
+
+# Histogram representation of the column OverallQual
+par(mfcol = c(1, 1))
+
+# Define the column name
+j0 <- "OverallQual"
+
+# Set the sequence for the x-axis
+x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+
+# Create a histogram for the entire column
+hist(data_train[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
+
+# Overlay normal distribution curve
+lines(x0, dnorm(x0, mean(data_train[, j0], na.rm = TRUE), sd(data_train[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
+
+
+``` 
+
+**Qqplot graphics**
+
+```{r warning=FALSE, message=FALSE}
+# Representation of normal quantiles for the column OverallQual
+par(mfrow = c(1, 1))
+
+# Define the column name
+j0 <- "OverallQual"
+
+# Set the sequence for the x-axis
+x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+
+# Create a quantile-quantile plot
+qqnorm(data_train[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
+qqline(data_train[, j0])
+
+
+```
+  
+  
+This exploratory analysis can give us an idea of the possible normal distribution of the univariate variables, but it is always better to do the respective normality tests.
+
+**Univariate normality test (Shapiro-Wilk)**
+
+The **null hypothesis** that the data **follow a univariate normal distribution** is tested. This hypothesis is **rejected** if the **p-value** given by the Shapiro-Wilk test is **less than 0.05**. Otherwise the assumption of normality of the data is not rejected.
+
+```{r warning=FALSE, message=FALSE}
+
+# Assuming 'data_train' is your original data frame
+data_train_tidy <- melt(data_train, value.name = "value")
+
+# Use the aggregate function with the correct FUN argument
+result <- aggregate(value ~ variable, data = data_train_tidy,
+                    FUN = function(x) shapiro.test(x)$p.value)
+
+# Print the row corresponding to OverallQual
+print(subset(result, variable == "OverallQual"))
+
+```
+
+**There is evidence of lack of univariate normality**  (p-value < 0.05).
+
 
 
 
 OverallCond: Rates the overall condition of the house (1 - Very Poor , 10 - Very Excellent)
 
 
+```{r warning=FALSE, message=FALSE}
+# Classical numeric descriptive analysis
+describe(OverallCond)
+
+# Histogram and density plots
+# Remember that package 'ggplot2' is required
+p1<-ggplot(data_train,aes(x=OverallCond))+geom_density()+
+  labs(title = "Density of OverallCond",x="OverallCond",y="Values")
+
+p2<-ggplot(data_train,aes(x=OverallCond))+geom_histogram()+
+  labs(title = "Histogram of OverallCond",x="OverallCond",y="Values")
+
+
+# This function controls the graphical output device
+# Remember that package 'ggpubr' is required
+ggarrange(p1,p2, nrow=1, common.legend = FALSE)
+
+```  
+
+```{r warning=FALSE, message=FALSE}
+# Missing Values
+
+na_counts <- sum(is.na(data_train$OverallCond))
+
+print(na_counts)
+
+``` 
+
+No missing values.
+
+Outliers
+
+```{r warning=FALSE, message=FALSE}
+
+# Boxplot to visualize outliers
+p1 <- ggplot(data_train, aes(x = OverallCond)) +
+  geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
+  coord_flip() +
+  labs(title = "Boxplot of densidad", x = "Values", y = "")
+
+# Count outliers
+outliers <- boxplot.stats(data_train$OverallCond)$out
+
+# Display the count of outliers
+cat("Number of outliers:", length(outliers), "\n")
+
+# Identify rows with outliers
+outlier_rows <- which(data_train$OverallCond %in% outliers)
+
+# Print the indices of rows with outliers
+cat("Indices of rows with outliers:", outlier_rows, "\n")
+
+
+
+```    
+  
+There are 125/106??????????? outliers, as there enough data records, we will eliminate them.
+
+```{r warning=FALSE, message=FALSE}
+
+# Remove rows with outliers
+data_train <- data_train[-outlier_rows, ]
+
+# Print a message after removing outliers
+cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
+
+``` 
+
+
+**Assumption of Normality**
+
+```{r warning=FALSE, message=FALSE}
+
+# Histogram representation of the column OverallCond
+par(mfcol = c(1, 1))
+
+# Define the column name
+j0 <- "OverallCond"
+
+# Set the sequence for the x-axis
+x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+
+# Create a histogram for the entire column
+hist(data_train[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
+
+# Overlay normal distribution curve
+lines(x0, dnorm(x0, mean(data_train[, j0], na.rm = TRUE), sd(data_train[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
+
+
+``` 
+
+
+**Qqplot graphics**
+
+```{r warning=FALSE, message=FALSE}
+# Representation of normal quantiles for the column OverallCond
+par(mfrow = c(1, 1))
+
+# Define the column name
+j0 <- "OverallCond"
+
+# Set the sequence for the x-axis
+x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+
+# Create a quantile-quantile plot
+qqnorm(data_train[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
+qqline(data_train[, j0])
+
+
+```
+  
+  
+This exploratory analysis can give us an idea of the possible normal distribution of the univariate variables, but it is always better to do the respective normality tests.
+
+**Univariate normality test (Shapiro-Wilk)**
+
+The **null hypothesis** that the data **follow a univariate normal distribution** is tested. This hypothesis is **rejected** if the **p-value** given by the Shapiro-Wilk test is **less than 0.05**. Otherwise the assumption of normality of the data is not rejected.
+
+```{r warning=FALSE, message=FALSE}
+
+# Assuming 'data_train' is your original data frame
+data_train_tidy <- melt(data_train, value.name = "value")
+
+# Use the aggregate function with the correct FUN argument
+result <- aggregate(value ~ variable, data = data_train_tidy,
+                    FUN = function(x) shapiro.test(x)$p.value)
+
+# Print the row corresponding to OverallCond
+print(subset(result, variable == "OverallCond"))
+
+```
+
+**There is evidence of lack of univariate normality**  (p-value < 0.05).
+
+
 
 YearBuilt: Original construction date
+
+```{r warning=FALSE, message=FALSE}
+# Classical numeric descriptive analysis
+describe(YearBuilt)
+
+# Histogram and density plots
+# Remember that package 'ggplot2' is required
+p1<-ggplot(data_train,aes(x=YearBuilt))+geom_density()+
+  labs(title = "Density of YearBuilt",x="YearBuilt",y="Values")
+
+p2<-ggplot(data_train,aes(x=YearBuilt))+geom_histogram()+
+  labs(title = "Histogram of YearBuilt",x="YearBuilt",y="Values")
+
+
+# This function controls the graphical output device
+# Remember that package 'ggpubr' is required
+ggarrange(p1,p2, nrow=1, common.legend = FALSE)
+
+``` 
+
+```{r warning=FALSE, message=FALSE}
+# Missing Values
+
+na_counts <- sum(is.na(data_train$YearBuilt))
+
+print(na_counts)
+print(na_counts/nrow(data_train))
+
+```    
+ 0 missing values 
+ 
+ Outliers
+
+```{r warning=FALSE, message=FALSE}
+# Boxplot to visualize outliers
+p1 <- ggplot(data_train, aes(x = YearBuilt)) +
+  geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
+  coord_flip() +
+  labs(title = "Boxplot of YearBuilt", x = "Values", y = "")
+
+ggarrange(p1, nrow=1, common.legend = FALSE)
+
+# Count outliers
+outliers <- boxplot.stats(data_train$YearBuilt)$out
+
+# Display the count of outliers
+cat("Number of outliers:", length(outliers), "\n")
+
+# Identify rows with outliers
+outlier_rows <- which(data_train$YearBuilt %in% outliers)
+
+# Print the indices of rows with outliers
+cat("Indices of rows with outliers:", outlier_rows, "\n")
+
+``` 
+
+There are 7 outliers, as there enough data records, we will eliminate them.
+
+```{r warning=FALSE, message=FALSE}
+
+# Remove rows with outliers
+data_train <- data_train[-outlier_rows, ]
+
+# Print a message after removing outliers
+cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
+
+```
+
+**Assumption of Normality**
+
+```{r warning=FALSE, message=FALSE}
+
+# Histogram representation of the column YearBuilt
+par(mfcol = c(1, 1))
+
+# Define the column name
+j0 <- "YearBuilt"
+
+# Set the sequence for the x-axis
+x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+
+# Create a histogram for the entire column
+hist(data_train[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
+
+# Overlay normal distribution curve
+lines(x0, dnorm(x0, mean(data_train[, j0], na.rm = TRUE), sd(data_train[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
+
+
+``` 
+
+**Qqplot graphics**
+
+```{r warning=FALSE, message=FALSE}
+# Representation of normal quantiles for the column YearBuilt
+par(mfrow = c(1, 1))
+
+# Define the column name
+j0 <- "YearBuilt"
+
+# Set the sequence for the x-axis
+x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+
+# Create a quantile-quantile plot
+qqnorm(data_train[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
+qqline(data_train[, j0])
+
+
+```
+
+This exploratory analysis can give us an idea of the possible normal distribution of the univariate variables, but it is always better to do the respective normality tests.
+
+**Univariate normality test (Shapiro-Wilk)**
+
+The **null hypothesis** that the data **follow a univariate normal distribution** is tested. This hypothesis is **rejected** if the **p-value** given by the Shapiro-Wilk test is **less than 0.05**. Otherwise the assumption of normality of the data is not rejected.
+
+```{r warning=FALSE, message=FALSE}
+
+# Assuming 'data_train' is your original data frame
+data_train_tidy <- melt(data_train, value.name = "value")
+
+# Use the aggregate function with the correct FUN argument
+result <- aggregate(value ~ variable, data = data_train_tidy,
+                    FUN = function(x) shapiro.test(x)$p.value)
+
+# Print the row corresponding to YearBuilt
+print(subset(result, variable == "YearBuilt"))
+
+```
+
+**There is evidence of lack of univariate normality**  (p-value < 0.05).
 
 
 
 ExterQual: Evaluates the quality of the material on the exterior
+
+```{r warning=FALSE, message=FALSE}
+# Classical numeric descriptive analysis
+describe(ExterQual)
+
+# Histogram and density plots
+# Remember that package 'ggplot2' is required
+p1<-ggplot(data_train,aes(x=ExterQual))+geom_density()+
+  labs(title = "Density of ExterQual",x="ExterQual",y="Values")
+
+p2<-ggplot(data_train,aes(x=OverallQual))+geom_histogram()+
+  labs(title = "Histogram of ExterQual",x="ExterQual",y="Values")
+
+
+# This function controls the graphical output device
+# Remember that package 'ggpubr' is required
+ggarrange(p1,p2, nrow=1, common.legend = FALSE)
+
+```  
 
 
 
