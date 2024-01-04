@@ -98,6 +98,22 @@ library(factoextra)
 
 # Package required to call 'scatterplot3d' function
 library(scatterplot3d)
+
+# Package required to call 'hetcor' function
+library(polycor)
+
+# Package required to call 'ggcorrplot' function
+library(ggcorrplot)
+
+# Package required to call 'corrplot' function
+library(corrplot)
+
+# Package required to call 'rplot' function
+library(corrr)
+
+# Package required to call 'mvn' function
+library(MVN)
+
 ```
 
 
@@ -239,69 +255,7 @@ cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
 
 
 **Assumption of Normality**
-
-```{r warning=FALSE, message=FALSE}
-
-# Histogram representation of the column MSSubClass
-par(mfcol = c(1, 1))
-
-# Define the column name
-j0 <- "MSSubClass"
-
-# Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
-
-# Create a histogram for the entire column
-hist(data_train[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
-
-# Overlay normal distribution curve
-lines(x0, dnorm(x0, mean(data_train[, j0], na.rm = TRUE), sd(data_train[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
-
-
-``` 
-
-
-**Qqplot graphics**
-
-```{r warning=FALSE, message=FALSE}
-# Representation of normal quantiles for the column MSSubClass
-par(mfrow = c(1, 1))
-
-# Define the column name
-j0 <- "MSSubClass"
-
-# Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
-
-# Create a quantile-quantile plot
-qqnorm(data_train[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
-qqline(data_train[, j0])
-
-
-```
-  
-  
-This exploratory analysis can give us an idea of the possible normal distribution of the univariate variables, but it is always better to do the respective normality tests.
-
-**Univariate normality test (Shapiro-Wilk)**
-
-The **null hypothesis** that the data **follow a univariate normal distribution** is tested. This hypothesis is **rejected** if the **p-value** given by the Shapiro-Wilk test is **less than 0.05**. Otherwise the assumption of normality of the data is not rejected.
-
-```{r warning=FALSE, message=FALSE}
-
-# Assuming 'data_train' is your original data frame
-data_train_tidy <- melt(data_train, value.name = "value")
-
-# Use the aggregate function with the correct FUN argument
-result <- aggregate(value ~ variable, data = data_train_tidy,
-                    FUN = function(x) shapiro.test(x)$p.value)
-
-# Print the row corresponding to MSSubClass
-print(subset(result, variable == "MSSubClass"))
-
-```
-
-**There is evidence of lack of univariate normality**  (p-value < 0.05).
+It isn't continuous so we skip this step.
 
 
 MSZoning : Identifies the general zoning classification of the sale.
@@ -358,7 +312,7 @@ print(na_counts)
 print(na_counts/nrow(data_train))
 
 ```    
- 259 missing values -> 17.74%
+ 248 missing values -> 18.28%
  
  It is a continuous variable, so we will analyze the random pattern with a Student test
  
@@ -692,7 +646,9 @@ Outliers
 p1 <- ggplot(data_train, aes(x = OverallQual)) +
   geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
   coord_flip() +
-  labs(title = "Boxplot of densidad", x = "Values", y = "")
+  labs(title = "Boxplot of OverallQual", x = "Values", y = "")
+
+ggarrange(p1, nrow=1, common.legend = FALSE)
 
 # Count outliers
 outliers <- boxplot.stats(data_train$OverallQual)$out
@@ -724,71 +680,10 @@ cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
 
 
 **Assumption of Normality**
+It isn't a continuous variable so we skip this step.
 
-```{r warning=FALSE, message=FALSE}
-
-# Histogram representation of the column OverallQual
-par(mfcol = c(1, 1))
-
-# Define the column name
-j0 <- "OverallQual"
-
-# Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
-
-# Create a histogram for the entire column
-hist(data_train[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
-
-# Overlay normal distribution curve
-lines(x0, dnorm(x0, mean(data_train[, j0], na.rm = TRUE), sd(data_train[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
-
-
-``` 
-
-**Qqplot graphics**
-
-```{r warning=FALSE, message=FALSE}
-# Representation of normal quantiles for the column OverallQual
-par(mfrow = c(1, 1))
-
-# Define the column name
-j0 <- "OverallQual"
-
-# Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
-
-# Create a quantile-quantile plot
-qqnorm(data_train[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
-qqline(data_train[, j0])
-
-
-```
   
   
-This exploratory analysis can give us an idea of the possible normal distribution of the univariate variables, but it is always better to do the respective normality tests.
-
-**Univariate normality test (Shapiro-Wilk)**
-
-The **null hypothesis** that the data **follow a univariate normal distribution** is tested. This hypothesis is **rejected** if the **p-value** given by the Shapiro-Wilk test is **less than 0.05**. Otherwise the assumption of normality of the data is not rejected.
-
-```{r warning=FALSE, message=FALSE}
-
-# Assuming 'data_train' is your original data frame
-data_train_tidy <- melt(data_train, value.name = "value")
-
-# Use the aggregate function with the correct FUN argument
-result <- aggregate(value ~ variable, data = data_train_tidy,
-                    FUN = function(x) shapiro.test(x)$p.value)
-
-# Print the row corresponding to OverallQual
-print(subset(result, variable == "OverallQual"))
-
-```
-
-**There is evidence of lack of univariate normality**  (p-value < 0.05).
-
-
-
 
 OverallCond: Rates the overall condition of the house (1 - Very Poor , 10 - Very Excellent)
 
@@ -831,7 +726,9 @@ Outliers
 p1 <- ggplot(data_train, aes(x = OverallCond)) +
   geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
   coord_flip() +
-  labs(title = "Boxplot of densidad", x = "Values", y = "")
+  labs(title = "Boxplot of OverallCond", x = "Values", y = "")
+
+ggarrange(p1, nrow=1, common.legend = FALSE)
 
 # Count outliers
 outliers <- boxplot.stats(data_train$OverallCond)$out
@@ -863,70 +760,7 @@ cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
 
 
 **Assumption of Normality**
-
-```{r warning=FALSE, message=FALSE}
-
-# Histogram representation of the column OverallCond
-par(mfcol = c(1, 1))
-
-# Define the column name
-j0 <- "OverallCond"
-
-# Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
-
-# Create a histogram for the entire column
-hist(data_train[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
-
-# Overlay normal distribution curve
-lines(x0, dnorm(x0, mean(data_train[, j0], na.rm = TRUE), sd(data_train[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
-
-
-``` 
-
-
-**Qqplot graphics**
-
-```{r warning=FALSE, message=FALSE}
-# Representation of normal quantiles for the column OverallCond
-par(mfrow = c(1, 1))
-
-# Define the column name
-j0 <- "OverallCond"
-
-# Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
-
-# Create a quantile-quantile plot
-qqnorm(data_train[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
-qqline(data_train[, j0])
-
-
-```
-  
-  
-This exploratory analysis can give us an idea of the possible normal distribution of the univariate variables, but it is always better to do the respective normality tests.
-
-**Univariate normality test (Shapiro-Wilk)**
-
-The **null hypothesis** that the data **follow a univariate normal distribution** is tested. This hypothesis is **rejected** if the **p-value** given by the Shapiro-Wilk test is **less than 0.05**. Otherwise the assumption of normality of the data is not rejected.
-
-```{r warning=FALSE, message=FALSE}
-
-# Assuming 'data_train' is your original data frame
-data_train_tidy <- melt(data_train, value.name = "value")
-
-# Use the aggregate function with the correct FUN argument
-result <- aggregate(value ~ variable, data = data_train_tidy,
-                    FUN = function(x) shapiro.test(x)$p.value)
-
-# Print the row corresponding to OverallCond
-print(subset(result, variable == "OverallCond"))
-
-```
-
-**There is evidence of lack of univariate normality**  (p-value < 0.05).
-
+It isn't a continuous variable so we skip this step.
 
 
 YearBuilt: Original construction date
@@ -999,67 +833,7 @@ cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
 ```
 
 **Assumption of Normality**
-
-```{r warning=FALSE, message=FALSE}
-
-# Histogram representation of the column YearBuilt
-par(mfcol = c(1, 1))
-
-# Define the column name
-j0 <- "YearBuilt"
-
-# Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
-
-# Create a histogram for the entire column
-hist(data_train[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
-
-# Overlay normal distribution curve
-lines(x0, dnorm(x0, mean(data_train[, j0], na.rm = TRUE), sd(data_train[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
-
-
-``` 
-
-**Qqplot graphics**
-
-```{r warning=FALSE, message=FALSE}
-# Representation of normal quantiles for the column YearBuilt
-par(mfrow = c(1, 1))
-
-# Define the column name
-j0 <- "YearBuilt"
-
-# Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
-
-# Create a quantile-quantile plot
-qqnorm(data_train[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
-qqline(data_train[, j0])
-
-
-```
-
-This exploratory analysis can give us an idea of the possible normal distribution of the univariate variables, but it is always better to do the respective normality tests.
-
-**Univariate normality test (Shapiro-Wilk)**
-
-The **null hypothesis** that the data **follow a univariate normal distribution** is tested. This hypothesis is **rejected** if the **p-value** given by the Shapiro-Wilk test is **less than 0.05**. Otherwise the assumption of normality of the data is not rejected.
-
-```{r warning=FALSE, message=FALSE}
-
-# Assuming 'data_train' is your original data frame
-data_train_tidy <- melt(data_train, value.name = "value")
-
-# Use the aggregate function with the correct FUN argument
-result <- aggregate(value ~ variable, data = data_train_tidy,
-                    FUN = function(x) shapiro.test(x)$p.value)
-
-# Print the row corresponding to YearBuilt
-print(subset(result, variable == "YearBuilt"))
-
-```
-
-**There is evidence of lack of univariate normality**  (p-value < 0.05).
+It isn't a continuous variable so we skip this step.
 
 
 
@@ -1125,16 +899,82 @@ p2<-ggplot(data_train, aes(x=factor(1), fill = GarageQual))+geom_bar()+
 ggarrange(p1,p2,nrow = 1,ncol=2, common.legend = TRUE)
 
 ``` 
+NA values in this variable mean that there isn't a garage. Should we study the homogeneity of this variable? In the case it is a yes:
+
 There are 81 missing values
 
 
+We have to analyze the random pattern. To do this, we study the homogeneity according to groups NA and non-NA with a Chi-square independence test.
+
+```{r warning=FALSE, message=FALSE}
+# Creating a binary variable for missing values in GarageQual
+data_train$GarageQual_missing <- ifelse(is.na(data_train$GarageQual), "Missing", "Not Missing")
+
+# Create a contingency table
+contingency_table <- table(data_train$GarageQual_missing)
+
+# Perform the Chi-square test
+chi_square_test <- chisq.test(contingency_table)
+
+# Print the result of the Chi-square test
+chi_square_test
 
 
-FALTA
-que se hace¿
-?
+```
+
+    Test Statistic (X-squared): The Chi-squared statistic is 950.44. This value is quite large, which suggests a strong association between the variables tested.
+
+    Degrees of Freedom (df): The degrees of freedom for this test is 1. This is typical for a test comparing two categories (in your case, missing vs non-missing values).
+
+    P-value: The p-value is less than 2.2e-16, which is effectively zero. This indicates that the observed difference in distributions between missing and non-missing 'GarageQual' values is extremely unlikely to have occurred by chance.
+
+Conclusions:
+
+    Significant Difference: There is a statistically significant difference in the distribution of missing and non-missing values for 'GarageQual'. This suggests that the presence of missing values in 'GarageQual' is not random.
+
+    Implications for Data Analysis: The significant result implies that missing values in 'GarageQual' could be related to some other factors or patterns in your data. It is important to explore why these values are missing. Are they missing at random, or is there some systematic reason behind their absence? This could impact how you handle these missing values in further analyses.
+
+    Considerations for Data Imputation: If you plan to impute missing values for 'GarageQual', this result suggests that you should be cautious. Simply filling in missing values without considering why they are missing might lead to biased results.
+
+    Further Investigation: It may be useful to explore other variables in your dataset to see if they can explain why 'GarageQual' values are missing. For example, are missing values more common in older properties, or in properties of a certain type?
+
+    Remember, while the Chi-squared test indicates a significant difference, it does not provide information about the nature of the relationship or its causality. Further analysis is needed to understand the underlying reasons for the missing values in 'GarageQual'.
+    
+
+Although there is no homegeneity, it is decided to act as in the case of a random pattern, we will substitute with the most frequent value (if it were ordinal, we would substitute with the median)
+
+```{r warning=FALSE, message=FALSE}
+
+# Convert GarageQual to an ordered factor with levels specified
+data_train$GarageQual <- factor(data_train$GarageQual, levels = c("Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
+
+# Convert the factor to numeric values
+numeric_qual <- as.numeric(data_train$GarageQual)
+
+# Calculate the median, excluding NA values
+median_numeric_qual <- median(numeric_qual, na.rm = TRUE)
+
+# Find the closest level in the original factor to the median of numeric values
+levels_qual <- levels(data_train$GarageQual)
+median_qual <- levels_qual[round(median_numeric_qual)]
+
+# Replace NA values with the median level
+data_train$GarageQual[is.na(data_train$GarageQual)] <- median_qual
+
+# Check the data to confirm changes
+table(data_train$GarageQual)
 
 
+```
+
+```{r warning=FALSE, message=FALSE}
+# Drop the SalePrice variable
+data_train <- select(data_train, -GarageQual_missing)
+
+# To verify that the column has been removed, you can view the structure of the dataframe
+str(data_train)
+
+```
 
 
 GrLivArea: Above grade (ground) living area square feet
@@ -1593,69 +1433,7 @@ cat("Indices of rows with outliers:", outlier_rows, "\n")
 There are 0 outliers.
 
 **Assumption of Normality**
-
-```{r warning=FALSE, message=FALSE}
-
-# Histogram representation of the column YrSold
-par(mfcol = c(1, 1))
-
-# Define the column name
-j0 <- "YrSold"
-
-# Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
-
-# Create a histogram for the entire column
-hist(data_train[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
-
-# Overlay normal distribution curve
-lines(x0, dnorm(x0, mean(data_train[, j0], na.rm = TRUE), sd(data_train[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
-
-
-``` 
-
-**Qqplot graphics**
-
-```{r warning=FALSE, message=FALSE}
-# Representation of normal quantiles for the column YrSold
-par(mfrow = c(1, 1))
-
-# Define the column name
-j0 <- "YrSold"
-
-# Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
-
-# Create a quantile-quantile plot
-qqnorm(data_train[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
-qqline(data_train[, j0])
-
-
-```
-
-This exploratory analysis can give us an idea of the possible normal distribution of the univariate variables, but it is always better to do the respective normality tests.
-
-**Univariate normality test (Shapiro-Wilk)**
-
-The **null hypothesis** that the data **follow a univariate normal distribution** is tested. This hypothesis is **rejected** if the **p-value** given by the Shapiro-Wilk test is **less than 0.05**. Otherwise the assumption of normality of the data is not rejected.
-
-```{r warning=FALSE, message=FALSE}
-
-# Assuming 'data_train' is your original data frame
-data_train_tidy <- melt(data_train, value.name = "value")
-
-# Use the aggregate function with the correct FUN argument
-result <- aggregate(value ~ variable, data = data_train_tidy,
-                    FUN = function(x) shapiro.test(x)$p.value)
-
-# Print the row corresponding to YrSold
-print(subset(result, variable == "YrSold"))
-
-```
-
-**There is evidence of lack of univariate normality**  (p-value < 0.05).
-
-
+It isn't a continuous variable so we skip this step.
 
 
 
@@ -1726,114 +1504,475 @@ ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 
 ``` 
 
+
+We will split this target variable into two categories (intervals) of equal amplitude.  
+
 ```{r warning=FALSE, message=FALSE}
-# Missing Values
+# Calculate the minimum and maximum of SalePrice
+min_price <- min(data_train$SalePrice, na.rm = TRUE)
+max_price <- max(data_train$SalePrice, na.rm = TRUE)
 
-na_counts <- sum(is.na(data_train$SalePrice))
+# Calculate the midpoint
+mid_point <- (min_price + max_price) / 2
 
-print(na_counts)
-print(na_counts/nrow(data_train))
+# Create a new categorical variable
+data_train$PriceCategory <- ifelse(data_train$SalePrice > mid_point, "Expensive", "Cheap")
+
+# Classical numeric descriptive analysis
+describe(data_train$SalePrice)
+
+# Histogram and density plots
+p1 <- ggplot(data_train, aes(x = SalePrice)) + 
+      geom_density() + 
+      labs(title = "Density of SalePrice", x = "SalePrice", y = "Density")
+
+p2 <- ggplot(data_train, aes(x = SalePrice)) + 
+      geom_histogram(bins = 30) + 
+      labs(title = "Histogram of SalePrice", x = "SalePrice", y = "Count")
+
+# This function controls the graphical output device
+ggarrange(p1, p2, nrow = 1, common.legend = FALSE)
+
+# Check the new variable
+table(data_train$PriceCategory)
 
 ``` 
 
-0 missing values 
- 
- Outliers
+```{r warning=FALSE, message=FALSE}
+# Drop the SalePrice variable
+data_train <- select(data_train, -SalePrice)
+
+# To verify that the column has been removed, you can view the structure of the dataframe
+str(data_train)
+```
 
 ```{r warning=FALSE, message=FALSE}
-# Boxplot to visualize outliers
-p1 <- ggplot(data_train, aes(x = SalePrice)) +
-  geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
-  coord_flip() +
-  labs(title = "Boxplot of SalePrice", x = "Values", y = "")
+# Basic descriptive statistics
+# Remember that package 'summarytools' is required
+freq(data_train$PriceCategory)
 
-ggarrange(p1, nrow=1, common.legend = FALSE)
+# Pie chart and bar graph
+p1<-ggplot(data_train, aes(x=factor(1), fill = PriceCategory))+geom_bar()+
+  coord_polar("y")+labs(x="SaleType",y="%")
+p2<-ggplot(data_train, aes(x=factor(1), fill = PriceCategory))+geom_bar()+
+  labs(x="PriceCategory",y="%")
 
-# Count outliers
-outliers <- boxplot.stats(data_train$SalePrice)$out
-
-# Display the count of outliers
-cat("Number of outliers:", length(outliers), "\n")
-
-# Identify rows with outliers
-outlier_rows <- which(data_train$SalePrice %in% outliers)
-
-# Print the indices of rows with outliers
-cat("Indices of rows with outliers:", outlier_rows, "\n")
+# This function controls the graphical output device
+# Remember that package 'ggpubr' is required
+ggarrange(p1,p2,nrow = 1,ncol=2, common.legend = TRUE)
 
 ``` 
 
-There are 38 outliers, as there enough data records, we will eliminate them.
+There aren't any missing values.
+
+We have finished our univariate exploratory analysis. We continue with the Multivariate exploratory analysis.
+
+# ** Multivariate exploratory analysis**
+
+
+First, we check the assumptions of correlation between variables with the Bartlett test.
+
+
+
+### Correlated variables
+
+According to the numerical results below, it is observed that the data **are correlated** both **at the sample level** (see correlation matrix) and **at the populacion level** (Bartlett's sphericity test is significant).
 
 ```{r warning=FALSE, message=FALSE}
 
-# Remove rows with outliers
-data_train <- data_train[-outlier_rows, ]
+###############################
+# Correlation at sample level #
+###############################
 
-# Print a message after removing outliers
-cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
+# Select only numeric columns
+numeric_data_train <- data_train[sapply(data_train, is.numeric)]
+
+# Are the variables correlated at sample level?
+correlation_matrix <- cor(numeric_data_train)
+
+# Display the first 6x6 portion of the correlation matrix
+correlation_matrix
+
+# Compute the determinant of the correlation matrix (for full matrix)
+det(correlation_matrix)
+
+
+###################################
+# Correlation at population level #
+###################################
+
+# Bartlett's sphericity test:
+# This test checks whether the correlations are significantly different from 0
+# The null hypothesis is H_0; det(R)=1 means the variables are uncorrelated 
+# R denotes the correlation matrix
+# cortest.bartlett function in the package pysch performs this test
+# This function works with standardized data.
+
+# Standardization
+numeric_data_train_scale<-scale(numeric_data_train)
+
+# Bartlett's sphericity test
+cortest.bartlett(cor(numeric_data_train_scale))
 
 ```
 
-**Assumption of Normality**
+
+Different graphical outputs are illustrated below that provide an intuitive idea of the correlation between the variables. A *trained eye* could anticipate the appropriate number of factors with this visual information.
 
 ```{r warning=FALSE, message=FALSE}
 
-# Histogram representation of the column SalePrice
-par(mfcol = c(1, 1))
+# Polychoric correlation matrix
+# Remember that package 'polycor' is required for 'hetcor' function
+poly_cor<-hetcor(numeric_data_train)$correlations
 
-# Define the column name
-j0 <- "SalePrice"
+# Remember that package 'ggcorrplot' is required for 'ggcorrplot' function
+ggcorrplot(poly_cor, type="lower",hc.order=T)
 
-# Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+# Another interesting visual representation is the following
+# Remember that package 'corrplot' is required for 'corrplot' function
+corrplot(cor(numeric_data_train), order = "hclust", tl.col='black', tl.cex=1)
 
-# Create a histogram for the entire column
-hist(data_train[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
-
-# Overlay normal distribution curve
-lines(x0, dnorm(x0, mean(data_train[, j0], na.rm = TRUE), sd(data_train[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
-
-
-``` 
-
-**Qqplot graphics**
-
-```{r warning=FALSE, message=FALSE}
-# Representation of normal quantiles for the column SalePrice
-par(mfrow = c(1, 1))
-
-# Define the column name
-j0 <- "SalePrice"
-
-# Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
-
-# Create a quantile-quantile plot
-qqnorm(data_train[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
-qqline(data_train[, j0])
 
 
 ```
 
-This exploratory analysis can give us an idea of the possible normal distribution of the univariate variables, but it is always better to do the respective normality tests.
+### Absence of outliers and missing values
 
-**Univariate normality test (Shapiro-Wilk)**
+Done in previous sections.
 
-The **null hypothesis** that the data **follow a univariate normal distribution** is tested. This hypothesis is **rejected** if the **p-value** given by the Shapiro-Wilk test is **less than 0.05**. Otherwise the assumption of normality of the data is not rejected.
+
+### Principal Component Analysis
+
+#### Obtaining
+
 
 ```{r warning=FALSE, message=FALSE}
 
-# Assuming 'data_train' is your original data frame
-data_train_tidy <- melt(data_train, value.name = "value")
+# The 'prcomp' function in the base R package performs this analysis
+# Parameters 'scale' and 'center' are set to TRUE to consider standardized data
+PCA<-prcomp(numeric_data_train, scale=T, center = T)
 
-# Use the aggregate function with the correct FUN argument
-result <- aggregate(value ~ variable, data = data_train_tidy,
-                    FUN = function(x) shapiro.test(x)$p.value)
+# The field 'rotation' of the 'PCA' object is a matrix 
+# Its columns are the coefficients of the principal components
+# Indicates the weight of each variable in the corresponding principal component
+PCA$rotation
 
-# Print the row corresponding to SalePrice
-print(subset(result, variable == "SalePrice"))
+# Standard deviations of each principal component
+PCA$sdev
+```
+
+
+Each principal component is obtained in a simple way as a linear combination of all the variables with the coefficients indicated by the columns of the rotation matrix.
+
+
+#### Explained variance rate
+
+```{r warning=FALSE, message=FALSE}
+
+# The function 'summary' applied to the 'PCA' object provides relevant information
+# - Standard deviations of each principal component
+# - Proportion of variance explained and cummulative variance
+summary(PCA)
+
+# The following graph shows the proportion of explained variance
+Explained_variance <- PCA$sdev^2 / sum(PCA$sdev^2)
+
+p1<-ggplot(data = data.frame(Explained_variance, pc = 1:10),
+  aes(x = pc, y = Explained_variance, fill=Explained_variance )) +
+  geom_col(width = 0.3) + scale_y_continuous(limits = c(0,0.6)) + theme_bw() +
+  labs(x = "Principal component", y= "Proportion of variance")
+
+# The following graph shows the proportion of cumulative explained variance
+Cummulative_variance<-cumsum(Explained_variance)
+
+p2<-ggplot( data = data.frame(Cummulative_variance, pc = 1:10),
+  aes(x = pc, y = Cummulative_variance ,fill=Cummulative_variance )) +
+  geom_col(width = 0.5) +  scale_y_continuous(limits = c(0,1)) + theme_bw() +
+  labs(x = "Principal component",
+       y = "Proportion of cumulative variance")
+
+p1
+p2
+
+fviz_eig(PCA)
+```
+
+
+#### Appropriate number of principal components
+
+There are different methods:
+
++ 1.- **Elbow method** (Cuadras, 2007).
++ 2.- **At the discretion of the researcher** who chooses a minimum percentage of variance explained by the principal components (it is not reliable because it can give more than necessary).
++ 3.- **Rule of Abdi et al.** (2010). The variances explained by the principal components are averaged and those whose proportion of explained variance exceeds the mean are selected.
+
+For this illustration, applying the rule of Abdi et al., only **four principal components are considered**, as can be deduced from the following code chunk.
+
+```{r warning=FALSE, message=FALSE}
+
+#######################
+# Rule of Abdi et al. #
+#######################
+
+# Variances
+PCA$sdev^2
+
+# Average of variances
+mean(PCA$sdev^2)
 
 ```
 
-**There is evidence of lack of univariate normality**  (p-value < 0.05).
+
+
+#### PCA graphical outputs of interest 
+
+##### Distances 
+
+
+```{r warning=FALSE, message=FALSE}
+
+# These graphical outputs show the projection of the variables in two dimensions
+# Display the weight of the variable in the direction of the principal component 
+
+# Projection of variables on the first and second principal components
+p1 <- fviz_pca_var(PCA, axes = c(1, 2), repel = TRUE, col.var = "cos2",
+                   legend.title = "Distance", title = "Variables (PC1 vs PC2)") + theme_bw()
+
+# Projection on the first and third principal components
+p2 <- fviz_pca_var(PCA, axes = c(1, 3), repel = TRUE, col.var = "cos2",
+                   legend.title = "Distance", title = "Variables (PC1 vs PC3)") + theme_bw()
+
+# Projection on the first and fourth principal components
+p3 <- fviz_pca_var(PCA, axes = c(1, 4), repel = TRUE, col.var = "cos2",
+                   legend.title = "Distance", title = "Variables (PC1 vs PC4)") + theme_bw()
+
+# Projection on the second and third principal components
+p4 <- fviz_pca_var(PCA, axes = c(2, 3), repel = TRUE, col.var = "cos2",
+                   legend.title = "Distance", title = "Variables (PC2 vs PC3)") + theme_bw()
+
+# Projection on the second and fourth principal components
+p5 <- fviz_pca_var(PCA, axes = c(2, 4), repel = TRUE, col.var = "cos2",
+                   legend.title = "Distance", title = "Variables (PC2 vs PC4)") + theme_bw()
+
+# Projection on the third and fourth principal components
+p6 <- fviz_pca_var(PCA, axes = c(3, 4), repel = TRUE, col.var = "cos2",
+                   legend.title = "Distance", title = "Variables (PC3 vs PC4)") + theme_bw()
+
+# Displaying graphics
+p1
+p2
+p3
+p4
+p5
+p6
+
+```
+
+
+
+##### Observations and variance contribution
+
+
+```{r warning=FALSE, message=FALSE}
+
+# It is also possible to represent the observations
+# As well as identify with colors those observations that explain the greatest 
+# variance of the principal components
+p1<-fviz_pca_ind(PCA,axes = c(1,2),col.ind = "contrib", 
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel=TRUE,legend.title="Contrib.var", title="Records")+theme_bw()
+
+
+p2<-fviz_pca_ind(PCA,axes=c(1,3),col.ind = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel=TRUE,legend.title="Contrib.var", title="Records")+theme_bw()
+
+p3<-fviz_pca_ind(PCA,axes=c(1,4),col.ind = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel=TRUE,legend.title="Contrib.var", title="Records")+theme_bw()
+
+p4<-fviz_pca_ind(PCA,axes=c(2,3),col.ind = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel=TRUE,legend.title="Contrib.var", title="Records")+theme_bw()
+
+p5<-fviz_pca_ind(PCA,axes=c(2,4),col.ind = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel=TRUE,legend.title="Contrib.var", title="Records")+theme_bw()
+
+p6<-fviz_pca_ind(PCA,axes=c(3,4),col.ind = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel=TRUE,legend.title="Contrib.var", title="Records")+theme_bw()
+
+# Displaying graphics
+p1
+p2
+p3
+p4
+p5
+p6
+
+```
+
+
+
+##### Observations and variables with variance contribution
+
+
+
+```{r warning=FALSE, message=FALSE}
+
+# Joint representation of variables and observations
+# Relates the possible relationships between the contributions of the records
+# to the variances of the components and the weight of the variables in each 
+# principal component
+
+p1<-fviz_pca(PCA,axes=c(1,2),alpha.ind ="contrib", col.var = "cos2",
+         col.ind="seagreen",
+         gradient.cols = c("#FDF50E", "#FD960E", "#FD1E0E"),
+         repel=TRUE, legend.title="Distancia")+theme_bw()
+
+p2<-fviz_pca(PCA,axes=c(1,3),alpha.ind ="contrib", 
+         col.var = "cos2",col.ind="seagreen",
+         gradient.cols = c("#FDF50E", "#FD960E", "#FD1E0E"),
+         repel=TRUE, legend.title="Distancia")+theme_bw()
+
+p3<-fviz_pca(PCA,axes=c(1,4),alpha.ind ="contrib", 
+         col.var = "cos2",col.ind="seagreen",
+         gradient.cols = c("#FDF50E", "#FD960E", "#FD1E0E"),
+         repel=TRUE, legend.title="Distancia")+theme_bw()
+
+p4<-fviz_pca(PCA,axes=c(2,3),alpha.ind ="contrib", 
+         col.var = "cos2",col.ind="seagreen",
+         gradient.cols = c("#FDF50E", "#FD960E", "#FD1E0E"),
+         repel=TRUE, legend.title="Distancia")+theme_bw()
+
+p5<-fviz_pca(PCA,axes=c(2,4),alpha.ind ="contrib", 
+         col.var = "cos2",col.ind="seagreen",
+         gradient.cols = c("#FDF50E", "#FD960E", "#FD1E0E"),
+         repel=TRUE, legend.title="Distancia")+theme_bw()
+
+p6<-fviz_pca(PCA,axes=c(3,4),alpha.ind ="contrib", 
+         col.var = "cos2",col.ind="seagreen",
+         gradient.cols = c("#FDF50E", "#FD960E", "#FD1E0E"),
+         repel=TRUE, legend.title="Distancia")+theme_bw()
+
+# Displaying graphics
+p1
+p2
+p3
+p4
+p5
+p6
+
+```
+
+
+##### Coordinates in the new reference system
+
+
+Finally, since the object of this part was to reduce the dimension of the data set, it is possible to obtain **the coordinates of the original data in the new reference system**. In fact, they are stored since we used the prcomp function to create the PCA variable.
+
+```{r warning=FALSE, message=FALSE}
+
+head(PCA$x)
+
+```
+
+
+### Factorial Analysis
+
+#### Appropriate number of latent factors
+
+There are different criteria, among which the **Scree plot** (Cattel 1966) and **parallel analysis** (Horn 1965) stand out. According to the following graphical outputs, **5** is considered to be the **optimal number of factors** (parallel analysis), despite **3** are the appropriate according to the first graphical scree plot.
+
+```{r warning=FALSE, message=FALSE}
+
+# Scree plot
+scree(poly_cor)
+
+#Parallel analysis
+fa.parallel(poly_cor,n.obs=100,fa="fa",fm="ml")
+
+
+```
+
+
+The factorial model with 3 factors implementing a varimax rotation to seek a simpler interpretation is performed.
+
+```{r warning=FALSE, message=FALSE}
+
+modelo_varimax<-fa(poly_cor,nfactors = 3,rotate = "varimax",
+                   fa="mle")
+
+# The rotated factorial matrix is shown
+print(modelo_varimax$loadings,cut=0) 
+
+```
+
+Visually we could make the effort to see what variables each correlates with one of the factors, but it is very tedious. So we use the following representation in diagram mode.
+
+In this diagram, among other things, it is seen that the first factor is associated with the items E1, E2, E3, E4, E5 and N4, which are the items of the questionnaire that try to identify the quality of extraversion.
+
+```{r warning=FALSE, message=FALSE}
+
+fa.diagram(modelo_varimax)
+
+```
+
+
+
+Another way to do the previous analysis.
+
+```{r warning=FALSE, message=FALSE}
+
+# Remember that package 'stats' is required for 'factanal' function
+# This function only performs the mle method
+FA<-factanal(numeric_data_train,factors=3, rotation="varimax")
+FA$loadings
+
+
+```
+
+
+QUESTIONS:  SHOULD WE STUDY THE HOMOGENEITY OF A CATEGORICAL DISCRETE VARIABLE WHOSE NA VALUES REPRESENT THAT THERE IS NO GARAGE?
+            SHOULD WE CONTINUE THE ANALYSIS WITH THE REDUCED DIMENSIONS?
+           
+
+
+### Multivariate normality
+
+
+```{r warning=FALSE, message=FALSE}
+
+
+# Royston multivariate normality test
+royston_test <- mvn(data = numeric_data_train, mvnTest = "royston", multivariatePlot = "qq")
+royston_test$multivariateNormality
+
+# Henze-Zirkler multivariate normality test
+hz_test <- mvn(data = numeric_data_train, mvnTest = "hz")
+hz_test$multivariateNormality
+
+```
+
+We find evidence of a lack of multivariate normality at the 5% level.
+
+
+### Clasifier using linear discriminant analysis
+
+
+
+
+
+### Classifier using quadratic discriminant analysis
+
+
+
+
+
+
+
+
+
+
+
