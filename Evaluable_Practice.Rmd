@@ -114,6 +114,27 @@ library(corrr)
 # Package required to call 'mvn' function
 library(MVN)
 
+# Package required to plot ROC curve
+library(pROC)
+library(caret)
+
+# Package required to call 'mutate' function
+library(tidyverse)
+
+# Package required to call 'clusGap' function
+library(cluster)
+
+# Package required to call 'get_dist', 'fviz_cluster' and 'fviz_dist' functions
+library(factoextra)
+
+# Package required to call 'ggdendrogram' function
+library(ggdendro)
+
+# Package required to call 'grid.arrange' function
+library(gridExtra)
+
+library(mclust)
+
 ```
 
 
@@ -899,82 +920,7 @@ p2<-ggplot(data_train, aes(x=factor(1), fill = GarageQual))+geom_bar()+
 ggarrange(p1,p2,nrow = 1,ncol=2, common.legend = TRUE)
 
 ``` 
-NA values in this variable mean that there isn't a garage. Should we study the homogeneity of this variable? In the case it is a yes:
-
-There are 81 missing values
-
-
-We have to analyze the random pattern. To do this, we study the homogeneity according to groups NA and non-NA with a Chi-square independence test.
-
-```{r warning=FALSE, message=FALSE}
-# Creating a binary variable for missing values in GarageQual
-data_train$GarageQual_missing <- ifelse(is.na(data_train$GarageQual), "Missing", "Not Missing")
-
-# Create a contingency table
-contingency_table <- table(data_train$GarageQual_missing)
-
-# Perform the Chi-square test
-chi_square_test <- chisq.test(contingency_table)
-
-# Print the result of the Chi-square test
-chi_square_test
-
-
-```
-
-    Test Statistic (X-squared): The Chi-squared statistic is 950.44. This value is quite large, which suggests a strong association between the variables tested.
-
-    Degrees of Freedom (df): The degrees of freedom for this test is 1. This is typical for a test comparing two categories (in your case, missing vs non-missing values).
-
-    P-value: The p-value is less than 2.2e-16, which is effectively zero. This indicates that the observed difference in distributions between missing and non-missing 'GarageQual' values is extremely unlikely to have occurred by chance.
-
-Conclusions:
-
-    Significant Difference: There is a statistically significant difference in the distribution of missing and non-missing values for 'GarageQual'. This suggests that the presence of missing values in 'GarageQual' is not random.
-
-    Implications for Data Analysis: The significant result implies that missing values in 'GarageQual' could be related to some other factors or patterns in your data. It is important to explore why these values are missing. Are they missing at random, or is there some systematic reason behind their absence? This could impact how you handle these missing values in further analyses.
-
-    Considerations for Data Imputation: If you plan to impute missing values for 'GarageQual', this result suggests that you should be cautious. Simply filling in missing values without considering why they are missing might lead to biased results.
-
-    Further Investigation: It may be useful to explore other variables in your dataset to see if they can explain why 'GarageQual' values are missing. For example, are missing values more common in older properties, or in properties of a certain type?
-
-    Remember, while the Chi-squared test indicates a significant difference, it does not provide information about the nature of the relationship or its causality. Further analysis is needed to understand the underlying reasons for the missing values in 'GarageQual'.
-    
-
-Although there is no homegeneity, it is decided to act as in the case of a random pattern, we will substitute with the most frequent value (if it were ordinal, we would substitute with the median)
-
-```{r warning=FALSE, message=FALSE}
-
-# Convert GarageQual to an ordered factor with levels specified
-data_train$GarageQual <- factor(data_train$GarageQual, levels = c("Po", "Fa", "TA", "Gd", "Ex"), ordered = TRUE)
-
-# Convert the factor to numeric values
-numeric_qual <- as.numeric(data_train$GarageQual)
-
-# Calculate the median, excluding NA values
-median_numeric_qual <- median(numeric_qual, na.rm = TRUE)
-
-# Find the closest level in the original factor to the median of numeric values
-levels_qual <- levels(data_train$GarageQual)
-median_qual <- levels_qual[round(median_numeric_qual)]
-
-# Replace NA values with the median level
-data_train$GarageQual[is.na(data_train$GarageQual)] <- median_qual
-
-# Check the data to confirm changes
-table(data_train$GarageQual)
-
-
-```
-
-```{r warning=FALSE, message=FALSE}
-# Drop the SalePrice variable
-data_train <- select(data_train, -GarageQual_missing)
-
-# To verify that the column has been removed, you can view the structure of the dataframe
-str(data_train)
-
-```
+NA values in this variable mean that there isn't a garage, so we don't have to impute those values. 
 
 
 GrLivArea: Above grade (ground) living area square feet
@@ -1508,20 +1454,16 @@ ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 We will split this target variable into two categories (intervals) of equal amplitude.  
 
 ```{r warning=FALSE, message=FALSE}
-# Calculate the minimum and maximum of SalePrice
-min_price <- min(data_train$SalePrice, na.rm = TRUE)
-max_price <- max(data_train$SalePrice, na.rm = TRUE)
 
-# Calculate the midpoint
-mid_point <- (min_price + max_price) / 2
+# Dividir SalePrice en dos grupos de igual frecuencia
+data_train$PriceCategory <- ntile(data_train$SalePrice, 2)
 
-# Create a new categorical variable
-data_train$PriceCategory <- ifelse(data_train$SalePrice > mid_point, "Expensive", "Cheap")
+# Asignar nombres a las categorías
+data_train$PriceCategory <- ifelse(data_train$PriceCategory == 1, "Cheap", "Expensive")
 
-# Classical numeric descriptive analysis
+# Resto del código para análisis descriptivo y gráficos
 describe(data_train$SalePrice)
 
-# Histogram and density plots
 p1 <- ggplot(data_train, aes(x = SalePrice)) + 
       geom_density() + 
       labs(title = "Density of SalePrice", x = "SalePrice", y = "Density")
@@ -1530,11 +1472,11 @@ p2 <- ggplot(data_train, aes(x = SalePrice)) +
       geom_histogram(bins = 30) + 
       labs(title = "Histogram of SalePrice", x = "SalePrice", y = "Count")
 
-# This function controls the graphical output device
 ggarrange(p1, p2, nrow = 1, common.legend = FALSE)
 
-# Check the new variable
+# Verificar la nueva variable
 table(data_train$PriceCategory)
+
 
 ``` 
 
@@ -1934,9 +1876,6 @@ FA$loadings
 ```
 
 
-QUESTIONS:  SHOULD WE STUDY THE HOMOGENEITY OF A CATEGORICAL DISCRETE VARIABLE WHOSE NA VALUES REPRESENT THAT THERE IS NO GARAGE?
-            SHOULD WE CONTINUE THE ANALYSIS WITH THE REDUCED DIMENSIONS?
-           
 
 
 ### Multivariate normality
@@ -1958,9 +1897,122 @@ hz_test$multivariateNormality
 We find evidence of a lack of multivariate normality at the 5% level.
 
 
+
+
 ### Clasifier using linear discriminant analysis
 
+In this example, **we will work with a partition of the dataset, as a training set,** on which we will perform the quadratic discriminant analysis, and **another partition, as a test set,** with which we perform the validation of the model.
 
+
+```{r warning=FALSE, message=FALSE}
+
+# The response variable has to be an object of the class 'factor' of R language
+data_train$PriceCategory<-as.factor(data_train$PriceCategory)
+
+
+set.seed(3)
+
+# Partitioning the dataset: training (80%) + test (20%)
+trainIndex<-createDataPartition(data_train$PriceCategory,p=0.80)$Resample
+datos_train<-data_train[trainIndex,]
+datos_test<-data_train[-trainIndex,]
+
+datos_train
+datos_test
+```
+
+
+The **lda** function of the **MASS** package adjusts this model.
+
+```{r warning=FALSE, message=FALSE}
+modelo_lda <- lda(formula = PriceCategory ~ LotFrontage + LotArea + OverallQual + OverallCond + YearBuilt + GrLivArea + X1stFlrSF + X2ndFlrSF + YrSold ,data = datos_train)
+modelo_lda
+
+```
+
+```{r warning=FALSE, message=FALSE}
+
+nuevas_observaciones <- datos_test
+predict(object = modelo_lda, newdata = nuevas_observaciones)
+
+```
+
+
+
+The **confusionmatrix** function of the **biotools** package performs cross-validation of the classification model.
+
+```{r warning=FALSE, message=FALSE}
+
+pred <- predict(object = modelo_lda, newdata = datos_test)
+confusionmatrix(datos_test$PriceCategory, pred$class)
+
+# Classification error percentage
+trainig_error <- mean(datos_test$PriceCategory != pred$class) * 100
+paste("trainig_error=", trainig_error, "%")
+
+```
+
+
+The **correct classifications rate is ???%**
+
+From a geometric point of view, linear discriminant analysis separates space using a straight line. 
+
+#### ROC curve
+```{r warning=FALSE, message=FALSE}
+
+# Asegúrate de obtener las probabilidades predichas
+pred <- predict(object = modelo_lda, newdata = datos_test, type = "response")
+
+# Calcula la curva ROC usando las probabilidades y la clase verdadera
+roc_curve <- roc(datos_test$PriceCategory, as.numeric(pred$posterior[,2]), levels = c("Cheap", "Expensive"))
+
+# Dibuja la curva ROC
+plot(roc_curve, main="Curva ROC para LDA", col="#1c61b6")
+
+# Agrega línea diagonal (clasificador aleatorio)
+abline(0, 1, lty=2, col = "red")
+
+# Opcional: Calcula el área bajo la curva (AUC)
+auc(roc_curve)
+
+```
+
+
+#### Validity measures
+
+```{r warning=FALSE, message=FALSE}
+
+# Calcula la matriz de confusión
+conf_mat <- confusionMatrix(pred$class, datos_test$PriceCategory)
+
+# Extrae los valores de TP, FP, TN, FN
+TP <- conf_mat$table[2,2]
+FP <- conf_mat$table[1,2]
+TN <- conf_mat$table[1,1]
+FN <- conf_mat$table[2,1]
+
+# Calcula las métricas
+PPV <- TP / (TP + FP)  # Positive Predictive Value
+TPR <- TP / (TP + FN)  # True Positive Rate o Sensitivity
+TNR <- TN / (TN + FP)  # True Negative Rate o Specificity
+F1 <- 2 * PPV * TPR / (PPV + TPR)  # F1 Score
+G_mean <- sqrt(TPR * TNR)  # G-mean
+Accuracy <- (TP + TN) / (TP + FP + FN + TN)  # Accuracy
+
+# Calcula AUC
+roc_curve <- roc(datos_test$PriceCategory, as.numeric(pred$posterior[,2]), levels = c("Cheap", "Expensive"))
+AUC <- auc(roc_curve)
+
+# Imprime las métricas
+cat("PPV:", PPV, "\n",
+    "TPR:", TPR, "\n",
+    "TNR:", TNR, "\n",
+    "F1-score:", F1, "\n",
+    "G-mean:", G_mean, "\n",
+    "Accuracy:", Accuracy, "\n",
+    "AUC:", AUC, "\n")
+
+```
 
 
 
@@ -1968,11 +2020,226 @@ We find evidence of a lack of multivariate normality at the 5% level.
 
 
 
+Although the assumption of multivariate normality is not verified, taking into account that the variances are not homogeneous, **a quadratic discriminant model is adjusted** because it is robust against the lack of this assumption, although it must be kept in mind given the possibility of obtaining unexpected results.
+
+The **qda** function of the **MASS** package performs the sorting.
+
+```{r warning=FALSE, message=FALSE}
+
+modelo_qda <- qda(PriceCategory ~ LotFrontage + LotArea + OverallQual + OverallCond + YearBuilt + GrLivArea + X1stFlrSF + X2ndFlrSF + YrSold ,data = datos_train)
+modelo_qda
+
+```
+
+The output of this object shows us the **prior probabilities** of each group, in this case 0.5 and the **means of each regressor per group**.
+
+Once the classifier is built, we can classify new data based on its measurements by simply calling the **predict** function. For example, **we are going to classify all the observations in the test dataset**.
+
+```{r warning=FALSE, message=FALSE}
+
+nuevas_observaciones <- datos_test
+predict(object = modelo_qda, newdata = nuevas_observaciones)
+
+```
 
 
 
+The **confusionmatrix** function of the **biotools** package performs cross-validation of the classification model.
+
+```{r warning=FALSE, message=FALSE}
+
+pred <- predict(object = modelo_qda, newdata = datos_test)
+confusionmatrix(datos_test$PriceCategory, pred$class)
+
+# Classification error percentage
+trainig_error <- mean(datos_test$PriceCategory != pred$class) * 100
+paste("trainig_error=", trainig_error, "%")
+
+```
+
+In this case the **correct classifications rate** is ???%.
+
+#### ROC curve
+
+```{r warning=FALSE, message=FALSE}
+
+# Asegúrate de obtener las probabilidades predichas
+pred <- predict(object = modelo_qda, newdata = datos_test, type = "response")
+
+# Calcula la curva ROC usando las probabilidades y la clase verdadera
+roc_curve <- roc(datos_test$PriceCategory, as.numeric(pred$posterior[,2]), levels = c("Cheap", "Expensive"))
+
+# Dibuja la curva ROC
+plot(roc_curve, main="Curva ROC para LDA", col="#1c61b6")
+
+# Agrega línea diagonal (clasificador aleatorio)
+abline(0, 1, lty=2, col = "red")
+
+# Opcional: Calcula el área bajo la curva (AUC)
+auc(roc_curve)
+
+```
+
+
+#### Validity measures
+
+```{r warning=FALSE, message=FALSE}
+
+# Calcula la matriz de confusión
+conf_mat <- confusionMatrix(pred$class, datos_test$PriceCategory)
+
+# Extrae los valores de TP, FP, TN, FN
+TP <- conf_mat$table[2,2]
+FP <- conf_mat$table[1,2]
+TN <- conf_mat$table[1,1]
+FN <- conf_mat$table[2,1]
+
+# Calcula las métricas
+PPV <- TP / (TP + FP)  # Positive Predictive Value
+TPR <- TP / (TP + FN)  # True Positive Rate o Sensitivity
+TNR <- TN / (TN + FP)  # True Negative Rate o Specificity
+F1 <- 2 * PPV * TPR / (PPV + TPR)  # F1 Score
+G_mean <- sqrt(TPR * TNR)  # G-mean
+Accuracy <- (TP + TN) / (TP + FP + FN + TN)  # Accuracy
+
+# Calcula AUC
+roc_curve <- roc(datos_test$PriceCategory, as.numeric(pred$posterior[,2]), levels = c("Cheap", "Expensive"))
+AUC <- auc(roc_curve)
+
+# Imprime las métricas
+cat("PPV:", PPV, "\n",
+    "TPR:", TPR, "\n",
+    "TNR:", TNR, "\n",
+    "F1-score:", F1, "\n",
+    "G-mean:", G_mean, "\n",
+    "Accuracy:", Accuracy, "\n",
+    "AUC:", AUC, "\n")
+
+```
+
+
+### Cluster Analysis
+
+```{r warning=FALSE, message=FALSE}
+
+distance<- get_dist(numeric_data_train)
+fviz_dist(distance, gradient = list(low ="yellow", mid = "white", high = "brown"))
+
+```
+
+
+## **Hierarchical clustering**: Ward's method
+
+**Hierarchical clustering** is interested in finding a hierarchy based on the closeness or similarity of the data according to the distance considered. In the **agglomerative** case, we start from a group with the closest observations. The next closest pairs are then calculated and groups are generated in an ascending manner. This construction can be observed visually by means of a **dendrogram**.
+
+Below it will be illustrated how the groups are defined by the number of vertical lines in the dendrogram, and the selection of the optimal number of groups can be estimated from this same graph.
+
+```{r warning=FALSE, message=FALSE}
+
+dendrogram <- hclust(dist(numeric_data_train, method = 'euclidean'), method = 'ward.D')
+ggdendrogram(dendrogram, rotate = FALSE, labels = FALSE, theme_dendro = TRUE) + 
+  labs(title = "Dendrograma")
+
+```
 
 
 
+## **Non-hierarchical clustering**: K-means algorithm
+
+Click this [link](https://uc-r.github.io/kmeans_clustering) to see a detailed description of this algorithm.
+
+The R language implements the **K-means algorithm** with the function of the same name. This function receives as input parameters the data and the number of groupings to be performed (*centers* parameter). To address the problem of **choosing initial seed points** it incorporates the *nstart* parameter that tests multiple initial configurations and reports on the best one. For example, if *nstart = 25*, it will generate 25 initial configurations. The use of this parameter is recommended.
+
+For this first example the *kmeans* function builds two clusters.
+
+```{r warning=FALSE, message=FALSE}
+
+k2 <- kmeans(numeric_data_train, centers = 2, nstart = 25)
+
+# Displaying all the fields of the object k2
+str(k2)
+
+```
+
+The output provided by the *kmeans* function is a list of information, including the following:
+
+* *cluster*: is a vector of integers, from 1 to K (K=2 in this case), which indicates the cluster in which each observation has been located.
+* *centers*: a matrix with the successive centers of the clusters.
+* *totss*: the total sum of squares.
+* *withinss*: sum of squares vector within each cluster (one component per cluster).
+* *tot.withinss*: total sum of squares of the clusters, i.e. sum(withinss).
+* *betweens*: sum of squares between groups, i.e. totss-tot.withinss.
+* *size*: the number of observations in each cluster.
 
 
+When displaying the variable *k2* it is seen how the groupings result in 2 grouping sizes of 30 and 20 states. The centers of each group (means) in the four variables (Murder, Assault, UrbanPop, Rape) are also seen. And finally the group assignment for each observation (i.e., Alabama was assigned to group 2, Arkansas was assigned to group 1, etc.).
+
+```{r warning=FALSE, message=FALSE}
+k2
+
+```
+
+
+```{r warning=FALSE, message=FALSE}
+
+fviz_cluster(k2,data=numeric_data_train)
+
+```
+
+
+```{r}
+
+set.seed(123)
+fviz_nbclust(numeric_data_train, kmeans, method = "wss")
+
+```
+
+
+```{r}
+
+set.seed(123)
+fviz_nbclust(df, kmeans, method = "silhouette")
+
+```
+
+
+```{r}
+
+set.seed(123)
+gap_stat <- clusGap(df, FUN = kmeans, nstart = 25,K.max = 10, B = 50)
+fviz_gap_stat(gap_stat)
+
+```
+
+```{r}
+
+
+
+```
+
+```{r warning=FALSE, message=FALSE}
+
+# Agregar las etiquetas de cluster al conjunto de datos original (asegúrate de que las filas coincidan)
+data_train$Cluster <- k2$cluster
+
+# Crear una tabla cruzada para comparar los clusters con PriceCategory
+table(data_train$PriceCategory, data_train$Cluster)
+
+```
+
+It coincides in the majority of the examples.
+
+
+```{r warning=FALSE, message=FALSE}
+
+adjusted_rand_index <- adjustedRandIndex(data_train$PriceCategory, data_train$Cluster)
+print(adjusted_rand_index)
+
+```
+´
+ El valor del ARI es 0.06957727. El ARI es una medida de la similitud entre dos asignaciones de cluster (en este caso, tu variable PriceCategory y los clusters generados por K-means), ajustada por la posibilidad de coincidencia aleatoria. Los valores de ARI pueden variar entre -1 y 1, donde:
+
+Un valor de 1 indica una coincidencia perfecta entre los dos agrupamientos.
+Un valor de 0 indica una coincidencia no mejor que la aleatoria.
+Un valor negativo indica una coincidencia peor que la aleatoria.
+En tu caso, un ARI de aproximadamente 0.07 sugiere que hay una pequeña coincidencia entre los clusters generados por K-means y la variable PriceCategory, pero esta coincidencia es ligeramente mejor que la aleatoria. Sin embargo, no es una coincidencia fuerte, lo que indica que la agrupación realizada por K-means no se alinea de manera significativa con las categorías de precios existentes.
