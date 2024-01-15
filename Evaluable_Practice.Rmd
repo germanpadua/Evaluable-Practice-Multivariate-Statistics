@@ -170,6 +170,7 @@ library(moments)
 
 ```
 
+In this chunk we will load the dataset.
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -180,9 +181,10 @@ data<-read.csv("train.csv", header = TRUE,sep =",", fileEncoding = "UTF-8")
 ```
 
 
-# ** Univariate exploratory analysis**
+# Univariate exploratory analysis
 
-In this phase it is recommended to carry out a preliminary exploratory analysis of the data. To do this, apply the different numerical and graphical techniques used in class. At first, it will focus on the analysis of each variable independently without yet looking for possible interactions between them. It is recommended to perform numerical and graphical analysis of each variable, to detect: data groupings, missing values, classical numeric descriptive analysis, extreme values, assumption of normality. 
+In this phase we carry out a preliminary exploratory analysis of the data. To do this, we apply different numerical and graphical techniques used in class. At first, we will focus on the analysis of each variable independently without yet looking for possible interactions between them, in order to detect: data groupings, missing values, classical numeric descriptive analysis, extreme values, assumption of normality. 
+
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -190,7 +192,7 @@ In this phase it is recommended to carry out a preliminary exploratory analysis 
 # So that we can access by their name with no refer to the data.frame identifier
 attach(data)
 
-# We will only select 13 variables for our study
+# We will only select 17 variables for our study
 data <- data[, c(
   "MSSubClass",
   "MSZoning",
@@ -220,11 +222,11 @@ head(data)
 
 ```
 
-
+Now we show the number of missing values per column
 
 ```{r warning=FALSE, message=FALSE}
 
-# Show the number of NA's values per column
+# Number of NA's values per column
 na_counts <- colMeans(is.na(data))
 
 print(na_counts)
@@ -233,8 +235,10 @@ print(na_counts)
 
 
 
-MSSubClass: Identifies the type of dwelling involved in the sale. (Discrete Numerical)
+## MSSubClass
+It identifies the type of dwelling involved in the sale. (Discrete Numerical)
 
+### Numeric descriptive analysis
 
 ```{r warning=FALSE, message=FALSE}
 # Classical numeric descriptive analysis
@@ -242,8 +246,6 @@ describe(MSSubClass)
 freq(MSSubClass)
 
 # Histogram and density plots
-# Remember that package 'ggplot2' is required
-
 p1<-ggplot(data,aes(x=MSSubClass))+geom_histogram()+
   labs(title = "Histogram of MSSubClass",x="MSSubClass",y="Values")
 
@@ -252,29 +254,20 @@ p1
 
 ```  
 
+### Missing values
 
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
-
 na_counts <- sum(is.na(data$MSSubClass))
 
 print(na_counts)
 
 ```    
- No missing values.
+There are no missing values.
  
  
- Classical numeric descriptive analysis
  
-```{r warning=FALSE, message=FALSE}
-
-describe(data$MSSubClass)
-
-
-```
- 
- 
-Outliers
+### Outliers
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -282,7 +275,7 @@ Outliers
 p1 <- ggplot(data, aes(x = MSSubClass)) +
   geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
   coord_flip() +
-  labs(title = "Boxplot of densidad", x = "Values", y = "")
+  labs(title = "Boxplot of MSSubClass", x = "Values", y = "")
 
 # Count outliers
 outliers <- boxplot.stats(data$MSSubClass)$out
@@ -296,7 +289,7 @@ outlier_rows <- which(data$MSSubClass %in% outliers)
 # Print the indices of rows with outliers
 cat("Indices of rows with outliers:", outlier_rows, "\n")
 
-
+p1
 
 ```    
   
@@ -314,17 +307,17 @@ cat("Outliers removed. New number of rows:", nrow(data), "\n")
 ``` 
 
 
-**Assumption of Normality**
+### Assumption of Normality
 It isn't continuous so we skip this step.
 
 
-MSZoning : Identifies the general zoning classification of the sale.
-It is a categorical variable
+## MSZoning
+It identifies the general zoning classification of the sale. (Categorical variable)
 
+### Numeric descriptive analysis
 ```{r warning=FALSE, message=FALSE}
 
 # Basic descriptive statistics
-# Remember that package 'summarytools' is required
 freq(MSZoning)
 
 # Pie chart and bar graph
@@ -334,21 +327,21 @@ p2<-ggplot(data, aes(x=factor(1), fill = MSZoning))+geom_bar()+
   labs(x="MSZoning",y="%")
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2,nrow = 1,ncol=2, common.legend = TRUE)
 
 ```
 
 There aren't any missing values, so we will continue with the next variable. 
 
-LotFrontage : Linear feet of street connected to property
+## LotFrontage
+Linear feet of street connected to property
 
+### Numeric descriptive analysis
 ```{r warning=FALSE, message=FALSE}
 # Classical numeric descriptive analysis
 describe(LotFrontage)
 
 # Histogram and density plots
-# Remember that package 'ggplot2' is required
 p1<-ggplot(data,aes(x=LotFrontage))+geom_density()+
   labs(title = "Density of LotFrontage",x="LotFrontage",y="Values")
 
@@ -357,11 +350,10 @@ p2<-ggplot(data,aes(x=LotFrontage))+geom_histogram()+
 
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 
 ```  
-
+### Missing values
 
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
@@ -374,8 +366,14 @@ print(na_counts/nrow(data))
 ```    
  248 missing values -> 18.28%
  
- It is a continuous variable, so we will analyze the random pattern with a Student test
+It is a continuous variable, so we will analyze the random pattern with a Student test
  
+#### Random pattern
+
+We analyze the random pattern. In order to do this, we will study the homogeneity according to groups NA and non NA with a chi squared independence test.
+ 
+Null Hypothesis (H0): The null hypothesis in a t-test is that there is no significant difference between the means of the two groups.
+Alternative Hypothesis (H1): The alternative hypothesis is that the true difference in means is not equal to 0.
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -391,23 +389,13 @@ print(result)
 ```
 
 
-    Null Hypothesis (H0): The null hypothesis in a t-test is that there is no significant difference between the means of the two groups.
+t-statistic: The t-value is 0. The t-value measures the difference between the means of the two groups relative to the variability in the data. A t-value of 0 suggests that there is no significant difference between the means.
+Degrees of Freedom (df): The degrees of freedom for the Welch Two Sample t-test is 2216.
+p-value: The p-value is 1. This is the probability of observing a t-statistic as extreme as the one computed from the sample, assuming that the null hypothesis is true. A p-value of 1 suggests that there is no evidence to reject the null hypothesis.
+Confidence Interval: The 95 percent confidence interval for the difference in means is from -1.890914 to 1.890914. This interval contains 0, further supporting the idea that there is no significant difference between the means.
+Interpretation: In summary, based on the provided p-value (1), we fail to reject the null hypothesis. There is no significant evidence to suggest that the means of the two groups (missing and non-missing values of LotFrontage) are different.
 
-    Alternative Hypothesis (H1): The alternative hypothesis is that the true difference in means is not equal to 0.
-
-    t-statistic: The t-value is 0. The t-value measures the difference between the means of the two groups relative to the variability in the data. A t-value of 0 suggests that there is no significant difference between the means.
-
-    Degrees of Freedom (df): The degrees of freedom for the Welch Two Sample t-test is 2216.
-
-    p-value: The p-value is 1. This is the probability of observing a t-statistic as extreme as the one computed from the sample, assuming that the null hypothesis is true. A p-value of 1 suggests that there is no evidence to reject the null hypothesis.
-
-    Confidence Interval: The 95 percent confidence interval for the difference in means is from -1.890914 to 1.890914. This interval contains 0, further supporting the idea that there is no significant difference between the means.
-
-    Interpretation: In summary, based on the provided p-value (1), we fail to reject the null hypothesis. There is no significant evidence to suggest that the means of the two groups (missing and non-missing values of LotFrontage) are different. The confidence interval includes 0, reinforcing the lack of a significant difference.
-
-
-  In the case of homogeneity the pattern is random and, in this case, it is chosen to
-replace the NA with the mean
+In the case of homogeneity the pattern is random and, in this scenario, it is chosen to replace the NA with the mean
 
 
 ```{r warning=FALSE, message=FALSE}
@@ -426,7 +414,7 @@ print(na_counts/nrow(data))
 ```
 
 
-Classical numeric descriptive analysis
+### Final numeric descriptive analysis
  
 ```{r warning=FALSE, message=FALSE}
 
@@ -436,7 +424,6 @@ describe(data$LotFrontage)
 ```{r warning=FALSE, message=FALSE}
 
 # Histogram and density plots
-# Remember that package 'ggplot2' is required
 p1<-ggplot(data,aes(x=data$LotFrontage))+geom_density()+
   labs(title = "Density of LotFrontage",x="LotFrontage",y="Values")
 
@@ -445,12 +432,11 @@ p2<-ggplot(data,aes(x=data$LotFrontage))+geom_histogram()+
 
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 
 ```  
 
-Outliers
+### Outliers
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -489,11 +475,11 @@ cat("Outliers removed. New number of rows:", nrow(data), "\n")
 ```  
 
 
-**Assumption of Normality**
+### Assumption of Normality
 
 ```{r warning=FALSE, message=FALSE}
 
-# Histogram representation of the column MSSubClass
+# Histogram representation of the column LotFrontage
 par(mfcol = c(1, 1))
 
 # Define the column name
@@ -512,10 +498,10 @@ lines(x0, dnorm(x0, mean(data[, j0], na.rm = TRUE), sd(data[, j0], na.rm = TRUE)
 ``` 
 
 
-**Qqplot graphics**
+#### Qqplot graphic
 
 ```{r warning=FALSE, message=FALSE}
-# Representation of normal quantiles for the column MSSubClass
+# Representation of normal quantiles for the column LotFrontage
 par(mfrow = c(1, 1))
 
 # Define the column name
@@ -534,16 +520,14 @@ qqline(data[, j0])
   
 This exploratory analysis can give us an idea of the possible normal distribution of the univariate variables, but it is always better to do the respective normality tests.
 
-**Univariate normality test (Shapiro-Wilk)**
+#### Univariate normality test (Shapiro-Wilk)
 
 The **null hypothesis** that the data **follow a univariate normal distribution** is tested. This hypothesis is **rejected** if the **p-value** given by the Shapiro-Wilk test is **less than 0.05**. Otherwise the assumption of normality of the data is not rejected.
 
 ```{r warning=FALSE, message=FALSE}
 
-# Assuming 'data' is your original data frame
 data_tidy <- melt(data, value.name = "value")
 
-# Use the aggregate function with the correct FUN argument
 result <- aggregate(value ~ variable, data = data_tidy,
                     FUN = function(x) shapiro.test(x)$p.value)
 
@@ -555,14 +539,16 @@ print(subset(result, variable == "LotFrontage"))
 **There is evidence of lack of univariate normality**  (p-value < 0.05).
 
 
-LotArea: Lot size in square feet
+## LotArea
+Lot size in square feet
+
+### Numeric descriptive analysis
 
 ```{r warning=FALSE, message=FALSE}
 # Classical numeric descriptive analysis
 describe(LotArea)
 
 # Histogram and density plots
-# Remember that package 'ggplot2' is required
 p1<-ggplot(data,aes(x=LotArea))+geom_density()+
   labs(title = "Density of LotArea",x="LotArea",y="Values")
 
@@ -571,11 +557,11 @@ p2<-ggplot(data,aes(x=LotArea))+geom_histogram()+
 
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 
 ``` 
 
+### Missing values
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
 
@@ -587,7 +573,7 @@ print(na_counts/nrow(data))
 ```    
  0 missing values -> 0%
  
- Outliers
+### Outliers
 
 ```{r warning=FALSE, message=FALSE}
 # Boxplot to visualize outliers
@@ -624,7 +610,7 @@ cat("Outliers removed. New number of rows:", nrow(data), "\n")
 
 ```
 
-**Assumption of Normality**
+### Assumption of Normality
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -646,7 +632,7 @@ lines(x0, dnorm(x0, mean(data[, j0], na.rm = TRUE), sd(data[, j0], na.rm = TRUE)
 
 ``` 
 
-**Qqplot graphics**
+#### Qqplot graphic
 
 ```{r warning=FALSE, message=FALSE}
 # Representation of normal quantiles for the column LotArea
@@ -667,7 +653,7 @@ qqline(data[, j0])
 
 This exploratory analysis can give us an idea of the possible normal distribution of the univariate variables, but it is always better to do the respective normality tests.
 
-**Univariate normality test (Shapiro-Wilk)**
+#### Univariate normality test (Shapiro-Wilk)
 
 The **null hypothesis** that the data **follow a univariate normal distribution** is tested. This hypothesis is **rejected** if the **p-value** given by the Shapiro-Wilk test is **less than 0.05**. Otherwise the assumption of normality of the data is not rejected.
 
@@ -686,14 +672,15 @@ print(subset(result, variable == "LotArea"))
 **There is evidence of lack of univariate normality**  (p-value < 0.05).
 
 
-OverallQual: Rates the overall material and finish of the house (1 - Very Poor , 10 - Very Excellent) (Ordinal Numerical Discrete)
+## OverallQual
+Rates the overall material and finish of the house (1 - Very Poor , 10 - Very Excellent) (Ordinal Numerical Discrete)
 
+### Numeric descriptive analysis
 ```{r warning=FALSE, message=FALSE}
 # Classical numeric descriptive analysis
 describe(OverallQual)
 
 # Histogram and density plots
-# Remember that package 'ggplot2' is required
 p1<-ggplot(data,aes(x=OverallQual))+geom_density()+
   labs(title = "Density of OverallQual",x="OverallQual",y="Values")
 
@@ -702,10 +689,11 @@ p2<-ggplot(data,aes(x=OverallQual))+geom_histogram()+
 
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 
 ```  
+
+### Missing values
 
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
@@ -719,7 +707,7 @@ print(na_counts)
 No missing values.
  
  
-Outliers
+### Outliers
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -760,21 +748,21 @@ cat("Outliers removed. New number of rows:", nrow(data), "\n")
 ``` 
 
 
-**Assumption of Normality**
+### Assumption of Normality
 It isn't a continuous variable so we skip this step.
 
   
   
 
-OverallCond: Rates the overall condition of the house (1 - Very Poor , 10 - Very Excellent)
+## OverallCond
+Rates the overall condition of the house (1 - Very Poor , 10 - Very Excellent)
 
-
+### Numeric descriptive analysis
 ```{r warning=FALSE, message=FALSE}
 # Classical numeric descriptive analysis
 describe(OverallCond)
 
 # Histogram and density plots
-# Remember that package 'ggplot2' is required
 p1<-ggplot(data,aes(x=OverallCond))+geom_density()+
   labs(title = "Density of OverallCond",x="OverallCond",y="Values")
 
@@ -783,11 +771,11 @@ p2<-ggplot(data,aes(x=OverallCond))+geom_histogram()+
 
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 
 ```  
 
+### Missing values
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
 
@@ -799,7 +787,7 @@ print(na_counts)
 
 No missing values.
 
-Outliers
+### Outliers
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -840,18 +828,19 @@ cat("Outliers removed. New number of rows:", nrow(data), "\n")
 ``` 
 
 
-**Assumption of Normality**
+### Assumption of Normality
 It isn't a continuous variable so we skip this step.
 
 
-YearBuilt: Original construction date
+## YearBuilt
+Original construction date
 
+### Numeric descriptive analysis
 ```{r warning=FALSE, message=FALSE}
 # Classical numeric descriptive analysis
 describe(YearBuilt)
 
 # Histogram and density plots
-# Remember that package 'ggplot2' is required
 p1<-ggplot(data,aes(x=YearBuilt))+geom_density()+
   labs(title = "Density of YearBuilt",x="YearBuilt",y="Values")
 
@@ -860,11 +849,11 @@ p2<-ggplot(data,aes(x=YearBuilt))+geom_histogram()+
 
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 
 ``` 
 
+### Missing values
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
 
@@ -876,7 +865,7 @@ print(na_counts/nrow(data))
 ```    
  0 missing values 
  
- Outliers
+### Outliers
 
 ```{r warning=FALSE, message=FALSE}
 # Boxplot to visualize outliers
@@ -913,17 +902,18 @@ cat("Outliers removed. New number of rows:", nrow(data), "\n")
 
 ```
 
-**Assumption of Normality**
+### Assumption of Normality
 It isn't a continuous variable so we skip this step.
 
 
 
-ExterQual: Evaluates the quality of the material on the exterior
+## ExterQual
+Evaluates the quality of the material on the exterior
 
+### Numeric descriptive analysis
 ```{r warning=FALSE, message=FALSE}
 
 # Basic descriptive statistics
-# Remember that package 'summarytools' is required
 freq(ExterQual)
 
 # Pie chart and bar graph
@@ -933,7 +923,6 @@ p2<-ggplot(data, aes(x=factor(1), fill = ExterQual))+geom_bar()+
   labs(x="ExterQual",y="%")
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2,nrow = 1,ncol=2, common.legend = TRUE)
 
 ``` 
@@ -941,11 +930,13 @@ There aren't any missing values, so we will continue with the next variable.
 
 
 
-ExterCond: Evaluates the present condition of the material on the exterior
+## ExterCond
+Evaluates the present condition of the material on the exterior
+
+### Numeric descriptive analysis
 ```{r warning=FALSE, message=FALSE}
 
 # Basic descriptive statistics
-# Remember that package 'summarytools' is required
 freq(ExterCond)
 
 # Pie chart and bar graph
@@ -955,18 +946,19 @@ p2<-ggplot(data, aes(x=factor(1), fill = ExterCond))+geom_bar()+
   labs(x="ExterCond",y="%")
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2,nrow = 1,ncol=2, common.legend = TRUE)
 
 ``` 
 There aren't any missing values, so we will continue with the next variable. 
 
   
-GarageQual: Garage quality
+## GarageQual
+Garage quality
+
+### Numeric descriptive analysis
 ```{r warning=FALSE, message=FALSE}
 
 # Basic descriptive statistics
-# Remember that package 'summarytools' is required
 freq(GarageQual)
 
 # Pie chart and bar graph
@@ -976,37 +968,116 @@ p2<-ggplot(data, aes(x=factor(1), fill = GarageQual))+geom_bar()+
   labs(x="GarageQual",y="%")
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2,nrow = 1,ncol=2, common.legend = TRUE)
 
 ``` 
-NA values in this variable mean that there isn't a garage, so we don't have to impute those values. 
+NA values in this variable mean that there isn't a garage, so we don't have to impute those values.
+In order to perform a correct implementation of the classification methods, we transform this variable to a numerical ordering.
+
+```{r}
+# Create a mapping for the transformation
+garage_qual_mapping <- c(TA = 3, Po = 1, Gd = 4, Fa = 2, Ex = 5)
+
+# Transform GarageQual variable
+data <- data %>% 
+  mutate(GarageQual_numeric = ifelse(is.na(GarageQual), 0, garage_qual_mapping[as.character(GarageQual)]))
+
+# Remove the original GarageQual variable
+data <- data %>%
+  select(-GarageQual)
+
+# Check the transformed data
+print(data$GarageQual_numeric)
+
+```
+
+```{r warning=FALSE, message=FALSE}
+# Classical numeric descriptive analysis
+describe(data$GarageQual_numeric)
+
+# Histogram and density plots
+p1<-ggplot(data,aes(x=GarageQual_numeric))+geom_density()+
+  labs(title = "Density of GarageQual_numeric",x="GarageQual_numeric",y="Values")
+
+p2<-ggplot(data,aes(x=GarageQual_numeric))+geom_histogram()+
+  labs(title = "Histogram of GarageQual_numeric",x="GarageQual_numeric",y="Values")
 
 
-GrLivArea: Above grade (ground) living area square feet
+# This function controls the graphical output device
+ggarrange(p1,p2, nrow=1, common.legend = FALSE)
+
+``` 
+
+### Outliers
+
+```{r warning=FALSE, message=FALSE}
+
+# Boxplot to visualize outliers
+p1 <- ggplot(data, aes(x = GarageQual_numeric)) +
+  geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
+  coord_flip() +
+  labs(title = "Boxplot of GarageQual_numeric", x = "Values", y = "")
+
+ggarrange(p1, nrow=1, common.legend = FALSE)
+
+# Count outliers
+outliers <- boxplot.stats(data$GarageQual_numeric)$out
+
+# Display the count of outliers
+cat("Number of outliers:", length(outliers), "\n")
+
+# Identify rows with outliers
+outlier_rows <- which(data$GarageQual_numeric %in% outliers)
+
+# Print the indices of rows with outliers
+cat("Indices of rows with outliers:", outlier_rows, "\n")
+
+
+
+```    
+  
+There are 92 outliers, as there enough data records, we will eliminate them.
+
+```{r warning=FALSE, message=FALSE}
+
+# Remove rows with outliers
+data <- data[-outlier_rows, ]
+
+# Print a message after removing outliers
+cat("Outliers removed. New number of rows:", nrow(data), "\n")
+
+``` 
+
+
+### Assumption of Normality
+It isn't a continuous variable so we skip this step.
+
+## GrLivArea
+Above grade (ground) living area square feet
+
+### Numeric descriptive analysis
 ```{r warning=FALSE, message=FALSE}
 # Classical numeric descriptive analysis
 describe(GrLivArea)
 
 # Histogram and density plots
-# Remember that package 'ggplot2' is required
 p1<-ggplot(data,aes(x=GrLivArea))+geom_density()+
   labs(title = "Density of GrLivArea",x="GrLivArea",y="Values")
 
-p2<-ggplot(data,aes(x=YearBuilt))+geom_histogram()+
+p2<-ggplot(data,aes(x=GrLivArea))+geom_histogram()+
   labs(title = "Histogram of GrLivArea",x="GrLivArea",y="Values")
 
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 
 ``` 
 
+### Missing values
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
 
-na_counts <- sum(is.na(data$YearBuilt))
+na_counts <- sum(is.na(data$GrLivArea))
 
 print(na_counts)
 print(na_counts/nrow(data))
@@ -1015,7 +1086,7 @@ print(na_counts/nrow(data))
 
 0 missing values 
  
- Outliers
+### Outliers
 
 ```{r warning=FALSE, message=FALSE}
 # Boxplot to visualize outliers
@@ -1051,7 +1122,7 @@ cat("Outliers removed. New number of rows:", nrow(data), "\n")
 
 ```
 
-**Assumption of Normality**
+### Assumption of Normality
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -1073,7 +1144,7 @@ lines(x0, dnorm(x0, mean(data[, j0], na.rm = TRUE), sd(data[, j0], na.rm = TRUE)
 
 ``` 
 
-**Qqplot graphics**
+#### Qqplot graphic
 
 ```{r warning=FALSE, message=FALSE}
 # Representation of normal quantiles for the column GrLivArea
@@ -1094,7 +1165,7 @@ qqline(data[, j0])
 
 This exploratory analysis can give us an idea of the possible normal distribution of the univariate variables, but it is always better to do the respective normality tests.
 
-**Univariate normality test (Shapiro-Wilk)**
+#### Univariate normality test (Shapiro-Wilk)
 
 The **null hypothesis** that the data **follow a univariate normal distribution** is tested. This hypothesis is **rejected** if the **p-value** given by the Shapiro-Wilk test is **less than 0.05**. Otherwise the assumption of normality of the data is not rejected.
 
@@ -1108,21 +1179,23 @@ result <- aggregate(value ~ variable, data = data_tidy,
                     FUN = function(x) shapiro.test(x)$p.value)
 
 # Print the row corresponding to YearBuilt
-print(subset(result, variable == "YearBuilt"))
+print(subset(result, variable == "GrLivArea"))
 
 ```
 
 **There is evidence of lack of univariate normality**  (p-value < 0.05).
 
 
-1stFlrSF: First Floor square feet 
+## 1stFlrSF
+First Floor square feet 
 
+
+### Numeric descriptive analysis
 ```{r warning=FALSE, message=FALSE}
 # Classical numeric descriptive analysis
 describe(X1stFlrSF)
 
 # Histogram and density plots
-# Remember that package 'ggplot2' is required
 p1<-ggplot(data,aes(x=X1stFlrSF))+geom_density()+
   labs(title = "Density of 1stFlrSF",x="1stFlrSF",y="Values")
 
@@ -1131,11 +1204,11 @@ p2<-ggplot(data,aes(x=X1stFlrSF))+geom_histogram()+
 
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 
 ``` 
 
+### Missing values
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
 
@@ -1148,8 +1221,7 @@ print(na_counts/nrow(data))
 
 0 missing values 
  
- Outliers
-
+### Outliers
 ```{r warning=FALSE, message=FALSE}
 # Boxplot to visualize outliers
 p1 <- ggplot(data, aes(x = X1stFlrSF)) +
@@ -1185,7 +1257,7 @@ cat("Outliers removed. New number of rows:", nrow(data), "\n")
 
 ```
 
-**Assumption of Normality**
+### Assumption of Normality
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -1207,7 +1279,7 @@ lines(x0, dnorm(x0, mean(data[, j0], na.rm = TRUE), sd(data[, j0], na.rm = TRUE)
 
 ``` 
 
-**Qqplot graphics**
+#### Qqplot graphic
 
 ```{r warning=FALSE, message=FALSE}
 # Representation of normal quantiles for the column X1stFlrSF
@@ -1228,7 +1300,7 @@ qqline(data[, j0])
 
 This exploratory analysis can give us an idea of the possible normal distribution of the univariate variables, but it is always better to do the respective normality tests.
 
-**Univariate normality test (Shapiro-Wilk)**
+#### Univariate normality test (Shapiro-Wilk)
 
 The **null hypothesis** that the data **follow a univariate normal distribution** is tested. This hypothesis is **rejected** if the **p-value** given by the Shapiro-Wilk test is **less than 0.05**. Otherwise the assumption of normality of the data is not rejected.
 
@@ -1251,14 +1323,15 @@ print(subset(result, variable == "X1stFlrSF"))
 
 
 
-X2ndFlrSF: Second floor square feet
+## X2ndFlrSF
+Second floor square feet
 
+### Numeric descriptive analysis
 ```{r warning=FALSE, message=FALSE}
 # Classical numeric descriptive analysis
 describe(X2ndFlrSF)
 
 # Histogram and density plots
-# Remember that package 'ggplot2' is required
 p1<-ggplot(data,aes(x=X2ndFlrSF))+geom_density()+
   labs(title = "Density of X2ndFlrSF",x="X2ndFlrSF",y="Values")
 
@@ -1267,11 +1340,11 @@ p2<-ggplot(data,aes(x=X2ndFlrSF))+geom_histogram()+
 
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 
 ``` 
 
+### Missing values
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
 
@@ -1284,8 +1357,7 @@ print(na_counts/nrow(data))
 
 0 missing values 
  
- Outliers
-
+### Outliers
 ```{r warning=FALSE, message=FALSE}
 # Boxplot to visualize outliers
 p1 <- ggplot(data, aes(x = X2ndFlrSF)) +
@@ -1311,7 +1383,7 @@ cat("Indices of rows with outliers:", outlier_rows, "\n")
 
 There are 0 outliers.
 
-**Assumption of Normality**
+### Assumption of Normality
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -1333,7 +1405,7 @@ lines(x0, dnorm(x0, mean(data[, j0], na.rm = TRUE), sd(data[, j0], na.rm = TRUE)
 
 ``` 
 
-**Qqplot graphics**
+#### Qqplot graphic
 
 ```{r warning=FALSE, message=FALSE}
 # Representation of normal quantiles for the column X2ndFlrSF
@@ -1354,7 +1426,7 @@ qqline(data[, j0])
 
 This exploratory analysis can give us an idea of the possible normal distribution of the univariate variables, but it is always better to do the respective normality tests.
 
-**Univariate normality test (Shapiro-Wilk)**
+#### Univariate normality test (Shapiro-Wilk)
 
 The **null hypothesis** that the data **follow a univariate normal distribution** is tested. This hypothesis is **rejected** if the **p-value** given by the Shapiro-Wilk test is **less than 0.05**. Otherwise the assumption of normality of the data is not rejected.
 
@@ -1378,14 +1450,15 @@ print(subset(result, variable == "X2ndFlrSF"))
 
 
 
-YrSold: Year Sold (YYYY)
+## YrSold
+Year Sold (YYYY)
 
+### Numeric descriptive analysis
 ```{r warning=FALSE, message=FALSE}
 # Classical numeric descriptive analysis
 describe(YrSold)
 
 # Histogram and density plots
-# Remember that package 'ggplot2' is required
 p1<-ggplot(data,aes(x=YrSold))+geom_density()+
   labs(title = "Density of YrSold",x="YrSold",y="Values")
 
@@ -1394,11 +1467,11 @@ p2<-ggplot(data,aes(x=YrSold))+geom_histogram()+
 
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 
 ``` 
 
+### Missing values
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
 
@@ -1411,7 +1484,7 @@ print(na_counts/nrow(data))
 
 0 missing values 
  
- Outliers
+### Outliers
 
 ```{r warning=FALSE, message=FALSE}
 # Boxplot to visualize outliers
@@ -1438,17 +1511,18 @@ cat("Indices of rows with outliers:", outlier_rows, "\n")
 
 There are 0 outliers.
 
-**Assumption of Normality**
+### Assumption of Normality
 It isn't a continuous variable so we skip this step.
 
 
 
-SaleType: Type of sale
+## SaleType
+Type of sale
 
+### Numeric descriptive analysis
 ```{r warning=FALSE, message=FALSE}
 
 # Basic descriptive statistics
-# Remember that package 'summarytools' is required
 freq(SaleType)
 
 # Pie chart and bar graph
@@ -1458,7 +1532,6 @@ p2<-ggplot(data, aes(x=factor(1), fill = SaleType))+geom_bar()+
   labs(x="SaleType",y="%")
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2,nrow = 1,ncol=2, common.legend = TRUE)
 
 ``` 
@@ -1466,12 +1539,13 @@ There aren't any missing values, so we will continue with the next variable.
 
 
 
-SaleCondition: Condition of sale
+## SaleCondition
+Condition of sale
 
+### Numeric descriptive analysis
 ```{r warning=FALSE, message=FALSE}
 
 # Basic descriptive statistics
-# Remember that package 'summarytools' is required
 freq(SaleCondition)
 
 # Pie chart and bar graph
@@ -1481,7 +1555,6 @@ p2<-ggplot(data, aes(x=factor(1), fill = SaleCondition))+geom_bar()+
   labs(x="SaleCondition",y="%")
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2,nrow = 1,ncol=2, common.legend = TRUE)
 
 ``` 
@@ -1490,13 +1563,15 @@ There aren't any missing values, so we will continue with the next variable.
 
 
 
-SalePrice
+## SalePrice
+Sale price of the property
+
+### Numeric descriptive analysis
 ```{r warning=FALSE, message=FALSE}
 # Classical numeric descriptive analysis
 describe(SalePrice)
 
 # Histogram and density plots
-# Remember that package 'ggplot2' is required
 p1<-ggplot(data,aes(x=SalePrice))+geom_density()+
   labs(title = "Density of SalePrice",x="SalePrice",y="Values")
 
@@ -1505,7 +1580,6 @@ p2<-ggplot(data,aes(x=SalePrice))+geom_histogram()+
 
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 
 ``` 
@@ -1517,7 +1591,6 @@ We can perform a log transformation to correct the skewness of the variable
 describe(log(SalePrice))
 
 # Histogram and density plots
-# Remember that package 'ggplot2' is required
 p1<-ggplot(data,aes(x=log(SalePrice)))+geom_density()+
   labs(title = "Density of SalePrice",x="SalePrice",y="Values")
 
@@ -1526,23 +1599,22 @@ p2<-ggplot(data,aes(x=log(SalePrice)))+geom_histogram()+
 
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 
 ``` 
 
 
-We will split this target variable into two categories (intervals) of equal amplitude.  
+We will split this target variable into two categories (intervals) of equal frequency  
 
 ```{r warning=FALSE, message=FALSE}
 
-# Dividir SalePrice en dos grupos de igual frecuencia
+# Split the target variable into two categories of equal frequency
 data$PriceCategory <- ntile(data$SalePrice, 2)
 
-# Asignar nombres a las categorías
+# Name each category
 data$PriceCategory <- ifelse(data$PriceCategory == 1, "Cheap", "Expensive")
 
-# Resto del código para análisis descriptivo y gráficos
+# Numeric descriptive analysis and graphics
 describe(data$SalePrice)
 
 p1 <- ggplot(data, aes(x = SalePrice)) + 
@@ -1555,7 +1627,7 @@ p2 <- ggplot(data, aes(x = SalePrice)) +
 
 ggarrange(p1, p2, nrow = 1, common.legend = FALSE)
 
-# Verificar la nueva variable
+# Verify the new variable
 table(data$PriceCategory)
 
 
@@ -1571,7 +1643,6 @@ str(data)
 
 ```{r warning=FALSE, message=FALSE}
 # Basic descriptive statistics
-# Remember that package 'summarytools' is required
 freq(data$PriceCategory)
 
 # Pie chart and bar graph
@@ -1581,7 +1652,6 @@ p2<-ggplot(data, aes(x=factor(1), fill = PriceCategory))+geom_bar()+
   labs(x="PriceCategory",y="%")
 
 # This function controls the graphical output device
-# Remember that package 'ggpubr' is required
 ggarrange(p1,p2,nrow = 1,ncol=2, common.legend = TRUE)
 
 ``` 
@@ -1590,14 +1660,14 @@ There aren't any missing values.
 
 We have finished our univariate exploratory analysis. We continue with the Multivariate exploratory analysis.
 
-# ** Multivariate exploratory analysis**
+# Multivariate exploratory analysis
 
 
 First, we check the assumptions of correlation between variables with the Bartlett test.
 
 
 
-### Correlated variables
+## Correlated variables
 
 According to the numerical results below, it is observed that the data **are correlated** both **at the sample level** (see correlation matrix) and **at the populacion level** (Bartlett's sphericity test is significant).
 
@@ -1640,33 +1710,30 @@ cortest.bartlett(cor(numeric_data_scale))
 ```
 
 
-Different graphical outputs are illustrated below that provide an intuitive idea of the correlation between the variables. A *trained eye* could anticipate the appropriate number of factors with this visual information.
+Different graphical outputs are shown below that provide an intuitive idea of the correlation between the variables.
 
 ```{r warning=FALSE, message=FALSE}
 
 # Polychoric correlation matrix
-# Remember that package 'polycor' is required for 'hetcor' function
 poly_cor<-hetcor(numeric_data)$correlations
 
-# Remember that package 'ggcorrplot' is required for 'ggcorrplot' function
 ggcorrplot(poly_cor, type="lower",hc.order=T)
 
 # Another interesting visual representation is the following
-# Remember that package 'corrplot' is required for 'corrplot' function
 corrplot(cor(numeric_data), order = "hclust", tl.col='black', tl.cex=1)
 
 
 
 ```
 
-### Absence of outliers and missing values
+## Absence of outliers and missing values
 
 Done in previous sections.
 
 
-### Principal Component Analysis
+## Principal Component Analysis
 
-#### Obtaining
+### Obtaining
 
 
 ```{r warning=FALSE, message=FALSE}
@@ -1688,7 +1755,7 @@ PCA$sdev
 Each principal component is obtained in a simple way as a linear combination of all the variables with the coefficients indicated by the columns of the rotation matrix.
 
 
-#### Explained variance rate
+### Explained variance rate
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -1721,15 +1788,9 @@ fviz_eig(PCA)
 ```
 
 
-#### Appropriate number of principal components
+### Appropriate number of principal components
 
-There are different methods:
-
-+ 1.- **Elbow method** (Cuadras, 2007).
-+ 2.- **At the discretion of the researcher** who chooses a minimum percentage of variance explained by the principal components (it is not reliable because it can give more than necessary).
-+ 3.- **Rule of Abdi et al.** (2010). The variances explained by the principal components are averaged and those whose proportion of explained variance exceeds the mean are selected.
-
-For this illustration, applying the rule of Abdi et al., only **four principal components are considered**, as can be deduced from the following code chunk.
+We apply the rule of Abdi et al., only **four principal components are considered**, as can be deduced from the following code chunk.
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -1747,9 +1808,9 @@ mean(PCA$sdev^2)
 
 
 
-#### PCA graphical outputs of interest 
+### PCA graphical outputs of interest 
 
-##### Distances 
+#### Distances 
 
 
 ```{r warning=FALSE, message=FALSE}
@@ -1793,7 +1854,7 @@ p6
 
 
 
-##### Observations and variance contribution
+#### Observations and variance contribution
 
 
 ```{r warning=FALSE, message=FALSE}
@@ -1836,9 +1897,9 @@ p6
 
 ```
 
+Since there are so many rows, the previous outputs are not too clear.
 
-
-##### Observations and variables with variance contribution
+#### Observations and variables with variance contribution
 
 
 
@@ -1890,10 +1951,10 @@ p6
 ```
 
 
-##### Coordinates in the new reference system
+#### Coordinates in the new reference system
 
 
-Finally, since the object of this part was to reduce the dimension of the data set, it is possible to obtain **the coordinates of the original data in the new reference system**. In fact, they are stored since we used the prcomp function to create the PCA variable.
+Finally, since the object of this part was to reduce the dimension of the data set, it is possible to obtain **the coordinates of the original data in the new reference system**.
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -1902,11 +1963,11 @@ head(PCA$x)
 ```
 
 
-### Factorial Analysis
+## Factorial Analysis
 
-#### Appropriate number of latent factors
+### Appropriate number of latent factors
 
-There are different criteria, among which the **Scree plot** (Cattel 1966) and **parallel analysis** (Horn 1965) stand out. According to the following graphical outputs, **5** is considered to be the **optimal number of factors** (parallel analysis), despite **3** are the appropriate according to the first graphical scree plot.
+There are different criteria, among which the **Scree plot** (Cattel 1966) and **parallel analysis** (Horn 1965) stand out. According to the following graphical outputs, **3** is considered to be the **optimal number of factors** (parallel analysis).
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -1934,14 +1995,11 @@ print(modelo_varimax$loadings,cut=0)
 
 Visually we could make the effort to see what variables each correlates with one of the factors, but it is very tedious. So we use the following representation in diagram mode.
 
-In this diagram, among other things, it is seen that the first factor is associated with the items E1, E2, E3, E4, E5 and N4, which are the items of the questionnaire that try to identify the quality of extraversion.
-
 ```{r warning=FALSE, message=FALSE}
 
 fa.diagram(modelo_varimax)
 
 ```
-
 
 
 Another way to do the previous analysis.
@@ -1959,7 +2017,7 @@ FA$loadings
 
 
 
-### Multivariate normality
+## Multivariate normality
 
 
 ```{r warning=FALSE, message=FALSE}
@@ -1980,9 +2038,9 @@ We find evidence of a lack of multivariate normality at the 5% level.
 
 
 
-### Clasifier using linear discriminant analysis
+## Clasifier using linear discriminant analysis
 
-In this example, **we will work with a partition of the dataset, as a training set,** on which we will perform the quadratic discriminant analysis, and **another partition, as a test set,** with which we perform the validation of the model.
+We will work with a partition of the dataset, as a training set (80% of the data) on which we will perform the quadratic discriminant analysis, and another partition, as a test set (20%), with which we perform the validation of the model.
 
 
 ```{r warning=FALSE, message=FALSE}
@@ -2006,7 +2064,7 @@ datos_test
 The **lda** function of the **MASS** package adjusts this model.
 
 ```{r warning=FALSE, message=FALSE}
-modelo_lda <- lda(formula = PriceCategory ~ LotFrontage + LotArea + OverallQual + OverallCond + YearBuilt + GrLivArea + X1stFlrSF + X2ndFlrSF + YrSold ,data = datos_train)
+modelo_lda <- lda(formula = PriceCategory ~ LotFrontage + MSSubClass + MSZoning + ExterQual + ExterCond + GarageQual_numeric + SaleType + SaleCondition + LotArea + OverallQual + OverallCond + YearBuilt + GrLivArea + X1stFlrSF + X2ndFlrSF + YrSold ,data = datos_train)
 modelo_lda
 
 ```
