@@ -3,6 +3,10 @@ title: "Evaluable Practice"
 author: "Pedro Jiménez García-Ligero, Álvaro Luna Ramírez, Nerea Alberdi Arrillaga and Germán José Padua Pleguezuelo"
 date: "`r Sys.Date()`"
 output:
+  pdf_document: default
+  word_document:
+    toc: yes
+    toc_depth: '6'
   html_document:
     df_print: paged
     toc: yes
@@ -11,10 +15,6 @@ output:
     toc_float:
       collapsed: yes
       smooth_scroll: no
-  word_document:
-    toc: yes
-    toc_depth: '6'
-  pdf_document: default
 ---
 <style>
 .math {
@@ -31,7 +31,6 @@ output:
 FALTA
 
 # Introduction
-german guapo
 
 
 **Loading/installation** of R packages necessary for this practice.
@@ -135,6 +134,9 @@ library(gridExtra)
 
 library(mclust)
 
+library(moments)
+
+
 ```
 
 
@@ -142,8 +144,7 @@ library(mclust)
 
 # Loading the .csv file
 # The output of this function is already a data.frame object
-data_train<-read.csv("train.csv", header = TRUE,sep =",", fileEncoding = "UTF-8")
-data_test<-read.csv("test.csv", header = TRUE, sep = ",", fileEncoding = "UTF-8")
+data<-read.csv("train.csv", header = TRUE,sep =",", fileEncoding = "UTF-8")
 
 ```
 
@@ -156,10 +157,10 @@ In this phase it is recommended to carry out a preliminary exploratory analysis 
 
 # This line loads the variable names from this data.frame
 # So that we can access by their name with no refer to the data.frame identifier
-attach(data_train)
+attach(data)
 
 # We will only select 13 variables for our study
-data_train <- data_train[, c(
+data <- data[, c(
   "MSSubClass",
   "MSZoning",
   "LotFrontage",
@@ -181,10 +182,10 @@ data_train <- data_train[, c(
 
 
 # Retrieving the name of the selected variables
-colnames(data_train)
+colnames(data)
 
 # Displaying a few records
-head(data_train)
+head(data)
 
 ```
 
@@ -193,7 +194,7 @@ head(data_train)
 ```{r warning=FALSE, message=FALSE}
 
 # Show the number of NA's values per column
-na_counts <- colMeans(is.na(data_train))
+na_counts <- colMeans(is.na(data))
 
 print(na_counts)
 
@@ -201,25 +202,22 @@ print(na_counts)
 
 
 
-MSSubClass: Identifies the type of dwelling involved in the sale.
+MSSubClass: Identifies the type of dwelling involved in the sale. (Discrete Numerical)
 
 
 ```{r warning=FALSE, message=FALSE}
 # Classical numeric descriptive analysis
 describe(MSSubClass)
+freq(MSSubClass)
 
 # Histogram and density plots
 # Remember that package 'ggplot2' is required
-p1<-ggplot(data_train,aes(x=MSSubClass))+geom_density()+
-  labs(title = "Density of MSSubClass",x="MSSubClass",y="Values")
 
-p2<-ggplot(data_train,aes(x=MSSubClass))+geom_histogram()+
+p1<-ggplot(data,aes(x=MSSubClass))+geom_histogram()+
   labs(title = "Histogram of MSSubClass",x="MSSubClass",y="Values")
 
 
-# This function controls the graphical output device
-# Remember that package 'ggpubr' is required
-ggarrange(p1,p2, nrow=1, common.legend = FALSE)
+p1
 
 ```  
 
@@ -227,7 +225,7 @@ ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
 
-na_counts <- sum(is.na(data_train$MSSubClass))
+na_counts <- sum(is.na(data$MSSubClass))
 
 print(na_counts)
 
@@ -235,24 +233,34 @@ print(na_counts)
  No missing values.
  
  
+ Classical numeric descriptive analysis
+ 
+```{r warning=FALSE, message=FALSE}
+
+describe(data$MSSubClass)
+
+
+```
+ 
+ 
 Outliers
 
 ```{r warning=FALSE, message=FALSE}
 
 # Boxplot to visualize outliers
-p1 <- ggplot(data_train, aes(x = MSSubClass)) +
+p1 <- ggplot(data, aes(x = MSSubClass)) +
   geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
   coord_flip() +
   labs(title = "Boxplot of densidad", x = "Values", y = "")
 
 # Count outliers
-outliers <- boxplot.stats(data_train$MSSubClass)$out
+outliers <- boxplot.stats(data$MSSubClass)$out
 
 # Display the count of outliers
 cat("Number of outliers:", length(outliers), "\n")
 
 # Identify rows with outliers
-outlier_rows <- which(data_train$MSSubClass %in% outliers)
+outlier_rows <- which(data$MSSubClass %in% outliers)
 
 # Print the indices of rows with outliers
 cat("Indices of rows with outliers:", outlier_rows, "\n")
@@ -267,10 +275,10 @@ There are 103 outliers, as there enough data records, we will eliminate them.
 ```{r warning=FALSE, message=FALSE}
 
 # Remove rows with outliers
-data_train <- data_train[-outlier_rows, ]
+data <- data[-outlier_rows, ]
 
 # Print a message after removing outliers
-cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
+cat("Outliers removed. New number of rows:", nrow(data), "\n")
 
 ``` 
 
@@ -289,9 +297,9 @@ It is a categorical variable
 freq(MSZoning)
 
 # Pie chart and bar graph
-p1<-ggplot(data_train, aes(x=factor(1), fill = MSZoning))+geom_bar()+
+p1<-ggplot(data, aes(x=factor(1), fill = MSZoning))+geom_bar()+
   coord_polar("y")+labs(x="MSZoning",y="%")
-p2<-ggplot(data_train, aes(x=factor(1), fill = MSZoning))+geom_bar()+
+p2<-ggplot(data, aes(x=factor(1), fill = MSZoning))+geom_bar()+
   labs(x="MSZoning",y="%")
 
 # This function controls the graphical output device
@@ -310,10 +318,10 @@ describe(LotFrontage)
 
 # Histogram and density plots
 # Remember that package 'ggplot2' is required
-p1<-ggplot(data_train,aes(x=LotFrontage))+geom_density()+
+p1<-ggplot(data,aes(x=LotFrontage))+geom_density()+
   labs(title = "Density of LotFrontage",x="LotFrontage",y="Values")
 
-p2<-ggplot(data_train,aes(x=LotFrontage))+geom_histogram()+
+p2<-ggplot(data,aes(x=LotFrontage))+geom_histogram()+
   labs(title = "Histogram of LotFrontage",x="LotFrontage",y="Values")
 
 
@@ -327,10 +335,10 @@ ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
 
-na_counts <- sum(is.na(data_train$LotFrontage))
+na_counts <- sum(is.na(data$LotFrontage))
 
 print(na_counts)
-print(na_counts/nrow(data_train))
+print(na_counts/nrow(data))
 
 ```    
  248 missing values -> 18.28%
@@ -341,10 +349,10 @@ print(na_counts/nrow(data_train))
 ```{r warning=FALSE, message=FALSE}
 
 # Create a subset for non-missing values
-non_missing_values <- data_train$LotFrontage[!is.na(data_train$LotFrontage)]
+non_missing_values <- data$LotFrontage[!is.na(data$LotFrontage)]
 
 # Perform a t-test for continuous variables
-result <- t.test(non_missing_values, data_train$LotFrontage, alternative = "two.sided")
+result <- t.test(non_missing_values, data$LotFrontage, alternative = "two.sided")
 print(paste("Variable: LotFrontage"))
 print(result)
 
@@ -374,26 +382,49 @@ replace the NA with the mean
 ```{r warning=FALSE, message=FALSE}
 
 # Calculate the mean of non-missing values
-mean_lot_frontage <- mean(data_train$LotFrontage, na.rm = TRUE)
+mean_lot_frontage <- mean(data$LotFrontage, na.rm = TRUE)
 
 # Replace missing values with the mean
-data_train$LotFrontage[is.na(data_train$LotFrontage)] <- mean_lot_frontage
+data$LotFrontage[is.na(data$LotFrontage)] <- mean_lot_frontage
 
-na_counts <- sum(is.na(data_train$LotFrontage))
+na_counts <- sum(is.na(data$LotFrontage))
 
 print(na_counts)
-print(na_counts/nrow(data_train))
+print(na_counts/nrow(data))
 
 ```
 
 
+Classical numeric descriptive analysis
  
+```{r warning=FALSE, message=FALSE}
+
+describe(data$LotFrontage)
+
+```
+```{r warning=FALSE, message=FALSE}
+
+# Histogram and density plots
+# Remember that package 'ggplot2' is required
+p1<-ggplot(data,aes(x=data$LotFrontage))+geom_density()+
+  labs(title = "Density of LotFrontage",x="LotFrontage",y="Values")
+
+p2<-ggplot(data,aes(x=data$LotFrontage))+geom_histogram()+
+  labs(title = "Histogram of LotFrontage",x="LotFrontage",y="Values")
+
+
+# This function controls the graphical output device
+# Remember that package 'ggpubr' is required
+ggarrange(p1,p2, nrow=1, common.legend = FALSE)
+
+```  
+
 Outliers
 
 ```{r warning=FALSE, message=FALSE}
 
 # Boxplot to visualize outliers
-p1 <- ggplot(data_train, aes(x = LotFrontage)) +
+p1 <- ggplot(data, aes(x = LotFrontage)) +
   geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
   coord_flip() +
   labs(title = "Boxplot of LotFrontage", x = "Values", y = "")
@@ -401,13 +432,13 @@ p1 <- ggplot(data_train, aes(x = LotFrontage)) +
 ggarrange(p1, nrow=1, common.legend = FALSE)
 
 # Count outliers
-outliers <- boxplot.stats(data_train$LotFrontage)$out
+outliers <- boxplot.stats(data$LotFrontage)$out
 
 # Display the count of outliers
 cat("Number of outliers:", length(outliers), "\n")
 
 # Identify rows with outliers
-outlier_rows <- which(data_train$LotFrontage %in% outliers)
+outlier_rows <- which(data$LotFrontage %in% outliers)
 
 # Print the indices of rows with outliers
 cat("Indices of rows with outliers:", outlier_rows, "\n")
@@ -419,10 +450,10 @@ There are 47 outliers, as there enough data records, we will eliminate them.
 ```{r warning=FALSE, message=FALSE}
 
 # Remove rows with outliers
-data_train <- data_train[-outlier_rows, ]
+data <- data[-outlier_rows, ]
 
 # Print a message after removing outliers
-cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
+cat("Outliers removed. New number of rows:", nrow(data), "\n")
 
 ```  
 
@@ -438,13 +469,13 @@ par(mfcol = c(1, 1))
 j0 <- "LotFrontage"
 
 # Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+x0 <- seq(min(data[, j0], na.rm = TRUE), max(data[, j0], na.rm = TRUE), length.out = 50)
 
 # Create a histogram for the entire column
-hist(data_train[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
+hist(data[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
 
 # Overlay normal distribution curve
-lines(x0, dnorm(x0, mean(data_train[, j0], na.rm = TRUE), sd(data_train[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
+lines(x0, dnorm(x0, mean(data[, j0], na.rm = TRUE), sd(data[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
 
 
 ``` 
@@ -460,11 +491,11 @@ par(mfrow = c(1, 1))
 j0 <- "LotFrontage"
 
 # Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+x0 <- seq(min(data[, j0], na.rm = TRUE), max(data[, j0], na.rm = TRUE), length.out = 50)
 
 # Create a quantile-quantile plot
-qqnorm(data_train[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
-qqline(data_train[, j0])
+qqnorm(data[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
+qqline(data[, j0])
 
 
 ```
@@ -478,11 +509,11 @@ The **null hypothesis** that the data **follow a univariate normal distribution*
 
 ```{r warning=FALSE, message=FALSE}
 
-# Assuming 'data_train' is your original data frame
-data_train_tidy <- melt(data_train, value.name = "value")
+# Assuming 'data' is your original data frame
+data_tidy <- melt(data, value.name = "value")
 
 # Use the aggregate function with the correct FUN argument
-result <- aggregate(value ~ variable, data = data_train_tidy,
+result <- aggregate(value ~ variable, data = data_tidy,
                     FUN = function(x) shapiro.test(x)$p.value)
 
 # Print the row corresponding to LotFrontage
@@ -501,10 +532,10 @@ describe(LotArea)
 
 # Histogram and density plots
 # Remember that package 'ggplot2' is required
-p1<-ggplot(data_train,aes(x=LotArea))+geom_density()+
+p1<-ggplot(data,aes(x=LotArea))+geom_density()+
   labs(title = "Density of LotArea",x="LotArea",y="Values")
 
-p2<-ggplot(data_train,aes(x=LotArea))+geom_histogram()+
+p2<-ggplot(data,aes(x=LotArea))+geom_histogram()+
   labs(title = "Histogram of LotArea",x="LotArea",y="Values")
 
 
@@ -517,10 +548,10 @@ ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
 
-na_counts <- sum(is.na(data_train$LotArea))
+na_counts <- sum(is.na(data$LotArea))
 
 print(na_counts)
-print(na_counts/nrow(data_train))
+print(na_counts/nrow(data))
 
 ```    
  0 missing values -> 0%
@@ -529,7 +560,7 @@ print(na_counts/nrow(data_train))
 
 ```{r warning=FALSE, message=FALSE}
 # Boxplot to visualize outliers
-p1 <- ggplot(data_train, aes(x = LotArea)) +
+p1 <- ggplot(data, aes(x = LotArea)) +
   geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
   coord_flip() +
   labs(title = "Boxplot of LotArea", x = "Values", y = "")
@@ -537,13 +568,13 @@ p1 <- ggplot(data_train, aes(x = LotArea)) +
 ggarrange(p1, nrow=1, common.legend = FALSE)
 
 # Count outliers
-outliers <- boxplot.stats(data_train$LotArea)$out
+outliers <- boxplot.stats(data$LotArea)$out
 
 # Display the count of outliers
 cat("Number of outliers:", length(outliers), "\n")
 
 # Identify rows with outliers
-outlier_rows <- which(data_train$LotArea %in% outliers)
+outlier_rows <- which(data$LotArea %in% outliers)
 
 # Print the indices of rows with outliers
 cat("Indices of rows with outliers:", outlier_rows, "\n")
@@ -555,10 +586,10 @@ There are 59 outliers, as there enough data records, we will eliminate them.
 ```{r warning=FALSE, message=FALSE}
 
 # Remove rows with outliers
-data_train <- data_train[-outlier_rows, ]
+data <- data[-outlier_rows, ]
 
 # Print a message after removing outliers
-cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
+cat("Outliers removed. New number of rows:", nrow(data), "\n")
 
 ```
 
@@ -573,13 +604,13 @@ par(mfcol = c(1, 1))
 j0 <- "LotArea"
 
 # Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+x0 <- seq(min(data[, j0], na.rm = TRUE), max(data[, j0], na.rm = TRUE), length.out = 50)
 
 # Create a histogram for the entire column
-hist(data_train[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
+hist(data[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
 
 # Overlay normal distribution curve
-lines(x0, dnorm(x0, mean(data_train[, j0], na.rm = TRUE), sd(data_train[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
+lines(x0, dnorm(x0, mean(data[, j0], na.rm = TRUE), sd(data[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
 
 
 ``` 
@@ -594,11 +625,11 @@ par(mfrow = c(1, 1))
 j0 <- "LotArea"
 
 # Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+x0 <- seq(min(data[, j0], na.rm = TRUE), max(data[, j0], na.rm = TRUE), length.out = 50)
 
 # Create a quantile-quantile plot
-qqnorm(data_train[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
-qqline(data_train[, j0])
+qqnorm(data[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
+qqline(data[, j0])
 
 
 ```
@@ -610,12 +641,10 @@ This exploratory analysis can give us an idea of the possible normal distributio
 The **null hypothesis** that the data **follow a univariate normal distribution** is tested. This hypothesis is **rejected** if the **p-value** given by the Shapiro-Wilk test is **less than 0.05**. Otherwise the assumption of normality of the data is not rejected.
 
 ```{r warning=FALSE, message=FALSE}
-
-# Assuming 'data_train' is your original data frame
-data_train_tidy <- melt(data_train, value.name = "value")
+data_tidy <- melt(data, value.name = "value")
 
 # Use the aggregate function with the correct FUN argument
-result <- aggregate(value ~ variable, data = data_train_tidy,
+result <- aggregate(value ~ variable, data = data_tidy,
                     FUN = function(x) shapiro.test(x)$p.value)
 
 # Print the row corresponding to LotArea
@@ -626,7 +655,7 @@ print(subset(result, variable == "LotArea"))
 **There is evidence of lack of univariate normality**  (p-value < 0.05).
 
 
-OverallQual: Rates the overall material and finish of the house (1 - Very Poor , 10 - Very Excellent)
+OverallQual: Rates the overall material and finish of the house (1 - Very Poor , 10 - Very Excellent) (Ordinal Numerical Discrete)
 
 ```{r warning=FALSE, message=FALSE}
 # Classical numeric descriptive analysis
@@ -634,10 +663,10 @@ describe(OverallQual)
 
 # Histogram and density plots
 # Remember that package 'ggplot2' is required
-p1<-ggplot(data_train,aes(x=OverallQual))+geom_density()+
+p1<-ggplot(data,aes(x=OverallQual))+geom_density()+
   labs(title = "Density of OverallQual",x="OverallQual",y="Values")
 
-p2<-ggplot(data_train,aes(x=OverallQual))+geom_histogram()+
+p2<-ggplot(data,aes(x=OverallQual))+geom_histogram()+
   labs(title = "Histogram of OverallQual",x="OverallQual",y="Values")
 
 
@@ -650,7 +679,7 @@ ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
 
-na_counts <- sum(is.na(data_train$OverallQual))
+na_counts <- sum(is.na(data$OverallQual))
 
 print(na_counts)
 
@@ -664,7 +693,7 @@ Outliers
 ```{r warning=FALSE, message=FALSE}
 
 # Boxplot to visualize outliers
-p1 <- ggplot(data_train, aes(x = OverallQual)) +
+p1 <- ggplot(data, aes(x = OverallQual)) +
   geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
   coord_flip() +
   labs(title = "Boxplot of OverallQual", x = "Values", y = "")
@@ -672,13 +701,13 @@ p1 <- ggplot(data_train, aes(x = OverallQual)) +
 ggarrange(p1, nrow=1, common.legend = FALSE)
 
 # Count outliers
-outliers <- boxplot.stats(data_train$OverallQual)$out
+outliers <- boxplot.stats(data$OverallQual)$out
 
 # Display the count of outliers
 cat("Number of outliers:", length(outliers), "\n")
 
 # Identify rows with outliers
-outlier_rows <- which(data_train$OverallQual %in% outliers)
+outlier_rows <- which(data$OverallQual %in% outliers)
 
 # Print the indices of rows with outliers
 cat("Indices of rows with outliers:", outlier_rows, "\n")
@@ -692,10 +721,10 @@ There are 2 outliers, as there enough data records, we will eliminate them.
 ```{r warning=FALSE, message=FALSE}
 
 # Remove rows with outliers
-data_train <- data_train[-outlier_rows, ]
+data <- data[-outlier_rows, ]
 
 # Print a message after removing outliers
-cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
+cat("Outliers removed. New number of rows:", nrow(data), "\n")
 
 ``` 
 
@@ -715,10 +744,10 @@ describe(OverallCond)
 
 # Histogram and density plots
 # Remember that package 'ggplot2' is required
-p1<-ggplot(data_train,aes(x=OverallCond))+geom_density()+
+p1<-ggplot(data,aes(x=OverallCond))+geom_density()+
   labs(title = "Density of OverallCond",x="OverallCond",y="Values")
 
-p2<-ggplot(data_train,aes(x=OverallCond))+geom_histogram()+
+p2<-ggplot(data,aes(x=OverallCond))+geom_histogram()+
   labs(title = "Histogram of OverallCond",x="OverallCond",y="Values")
 
 
@@ -731,7 +760,7 @@ ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
 
-na_counts <- sum(is.na(data_train$OverallCond))
+na_counts <- sum(is.na(data$OverallCond))
 
 print(na_counts)
 
@@ -744,7 +773,7 @@ Outliers
 ```{r warning=FALSE, message=FALSE}
 
 # Boxplot to visualize outliers
-p1 <- ggplot(data_train, aes(x = OverallCond)) +
+p1 <- ggplot(data, aes(x = OverallCond)) +
   geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
   coord_flip() +
   labs(title = "Boxplot of OverallCond", x = "Values", y = "")
@@ -752,13 +781,13 @@ p1 <- ggplot(data_train, aes(x = OverallCond)) +
 ggarrange(p1, nrow=1, common.legend = FALSE)
 
 # Count outliers
-outliers <- boxplot.stats(data_train$OverallCond)$out
+outliers <- boxplot.stats(data$OverallCond)$out
 
 # Display the count of outliers
 cat("Number of outliers:", length(outliers), "\n")
 
 # Identify rows with outliers
-outlier_rows <- which(data_train$OverallCond %in% outliers)
+outlier_rows <- which(data$OverallCond %in% outliers)
 
 # Print the indices of rows with outliers
 cat("Indices of rows with outliers:", outlier_rows, "\n")
@@ -772,10 +801,10 @@ There are 106 outliers, as there enough data records, we will eliminate them.
 ```{r warning=FALSE, message=FALSE}
 
 # Remove rows with outliers
-data_train <- data_train[-outlier_rows, ]
+data <- data[-outlier_rows, ]
 
 # Print a message after removing outliers
-cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
+cat("Outliers removed. New number of rows:", nrow(data), "\n")
 
 ``` 
 
@@ -792,10 +821,10 @@ describe(YearBuilt)
 
 # Histogram and density plots
 # Remember that package 'ggplot2' is required
-p1<-ggplot(data_train,aes(x=YearBuilt))+geom_density()+
+p1<-ggplot(data,aes(x=YearBuilt))+geom_density()+
   labs(title = "Density of YearBuilt",x="YearBuilt",y="Values")
 
-p2<-ggplot(data_train,aes(x=YearBuilt))+geom_histogram()+
+p2<-ggplot(data,aes(x=YearBuilt))+geom_histogram()+
   labs(title = "Histogram of YearBuilt",x="YearBuilt",y="Values")
 
 
@@ -808,10 +837,10 @@ ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
 
-na_counts <- sum(is.na(data_train$YearBuilt))
+na_counts <- sum(is.na(data$YearBuilt))
 
 print(na_counts)
-print(na_counts/nrow(data_train))
+print(na_counts/nrow(data))
 
 ```    
  0 missing values 
@@ -820,7 +849,7 @@ print(na_counts/nrow(data_train))
 
 ```{r warning=FALSE, message=FALSE}
 # Boxplot to visualize outliers
-p1 <- ggplot(data_train, aes(x = YearBuilt)) +
+p1 <- ggplot(data, aes(x = YearBuilt)) +
   geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
   coord_flip() +
   labs(title = "Boxplot of YearBuilt", x = "Values", y = "")
@@ -828,13 +857,13 @@ p1 <- ggplot(data_train, aes(x = YearBuilt)) +
 ggarrange(p1, nrow=1, common.legend = FALSE)
 
 # Count outliers
-outliers <- boxplot.stats(data_train$YearBuilt)$out
+outliers <- boxplot.stats(data$YearBuilt)$out
 
 # Display the count of outliers
 cat("Number of outliers:", length(outliers), "\n")
 
 # Identify rows with outliers
-outlier_rows <- which(data_train$YearBuilt %in% outliers)
+outlier_rows <- which(data$YearBuilt %in% outliers)
 
 # Print the indices of rows with outliers
 cat("Indices of rows with outliers:", outlier_rows, "\n")
@@ -846,10 +875,10 @@ There are 5 outliers, as there enough data records, we will eliminate them.
 ```{r warning=FALSE, message=FALSE}
 
 # Remove rows with outliers
-data_train <- data_train[-outlier_rows, ]
+data <- data[-outlier_rows, ]
 
 # Print a message after removing outliers
-cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
+cat("Outliers removed. New number of rows:", nrow(data), "\n")
 
 ```
 
@@ -867,9 +896,9 @@ ExterQual: Evaluates the quality of the material on the exterior
 freq(ExterQual)
 
 # Pie chart and bar graph
-p1<-ggplot(data_train, aes(x=factor(1), fill = ExterQual))+geom_bar()+
+p1<-ggplot(data, aes(x=factor(1), fill = ExterQual))+geom_bar()+
   coord_polar("y")+labs(x="ExterQual",y="%")
-p2<-ggplot(data_train, aes(x=factor(1), fill = ExterQual))+geom_bar()+
+p2<-ggplot(data, aes(x=factor(1), fill = ExterQual))+geom_bar()+
   labs(x="ExterQual",y="%")
 
 # This function controls the graphical output device
@@ -889,9 +918,9 @@ ExterCond: Evaluates the present condition of the material on the exterior
 freq(ExterCond)
 
 # Pie chart and bar graph
-p1<-ggplot(data_train, aes(x=factor(1), fill = ExterCond))+geom_bar()+
+p1<-ggplot(data, aes(x=factor(1), fill = ExterCond))+geom_bar()+
   coord_polar("y")+labs(x="ExterCond",y="%")
-p2<-ggplot(data_train, aes(x=factor(1), fill = ExterCond))+geom_bar()+
+p2<-ggplot(data, aes(x=factor(1), fill = ExterCond))+geom_bar()+
   labs(x="ExterCond",y="%")
 
 # This function controls the graphical output device
@@ -910,9 +939,9 @@ GarageQual: Garage quality
 freq(GarageQual)
 
 # Pie chart and bar graph
-p1<-ggplot(data_train, aes(x=factor(1), fill = GarageQual))+geom_bar()+
+p1<-ggplot(data, aes(x=factor(1), fill = GarageQual))+geom_bar()+
   coord_polar("y")+labs(x="GarageQual",y="%")
-p2<-ggplot(data_train, aes(x=factor(1), fill = GarageQual))+geom_bar()+
+p2<-ggplot(data, aes(x=factor(1), fill = GarageQual))+geom_bar()+
   labs(x="GarageQual",y="%")
 
 # This function controls the graphical output device
@@ -930,10 +959,10 @@ describe(GrLivArea)
 
 # Histogram and density plots
 # Remember that package 'ggplot2' is required
-p1<-ggplot(data_train,aes(x=GrLivArea))+geom_density()+
+p1<-ggplot(data,aes(x=GrLivArea))+geom_density()+
   labs(title = "Density of GrLivArea",x="GrLivArea",y="Values")
 
-p2<-ggplot(data_train,aes(x=YearBuilt))+geom_histogram()+
+p2<-ggplot(data,aes(x=YearBuilt))+geom_histogram()+
   labs(title = "Histogram of GrLivArea",x="GrLivArea",y="Values")
 
 
@@ -946,10 +975,10 @@ ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
 
-na_counts <- sum(is.na(data_train$YearBuilt))
+na_counts <- sum(is.na(data$YearBuilt))
 
 print(na_counts)
-print(na_counts/nrow(data_train))
+print(na_counts/nrow(data))
 
 ```  
 
@@ -959,7 +988,7 @@ print(na_counts/nrow(data_train))
 
 ```{r warning=FALSE, message=FALSE}
 # Boxplot to visualize outliers
-p1 <- ggplot(data_train, aes(x = GrLivArea)) +
+p1 <- ggplot(data, aes(x = GrLivArea)) +
   geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
   coord_flip() +
   labs(title = "Boxplot of GrLivArea", x = "Values", y = "")
@@ -967,13 +996,13 @@ p1 <- ggplot(data_train, aes(x = GrLivArea)) +
 ggarrange(p1, nrow=1, common.legend = FALSE)
 
 # Count outliers
-outliers <- boxplot.stats(data_train$GrLivArea)$out
+outliers <- boxplot.stats(data$GrLivArea)$out
 
 # Display the count of outliers
 cat("Number of outliers:", length(outliers), "\n")
 
 # Identify rows with outliers
-outlier_rows <- which(data_train$GrLivArea %in% outliers)
+outlier_rows <- which(data$GrLivArea %in% outliers)
 
 # Print the indices of rows with outliers
 cat("Indices of rows with outliers:", outlier_rows, "\n")
@@ -984,10 +1013,10 @@ There are 17 outliers, as there enough data records, we will eliminate them.
 ```{r warning=FALSE, message=FALSE}
 
 # Remove rows with outliers
-data_train <- data_train[-outlier_rows, ]
+data <- data[-outlier_rows, ]
 
 # Print a message after removing outliers
-cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
+cat("Outliers removed. New number of rows:", nrow(data), "\n")
 
 ```
 
@@ -1002,13 +1031,13 @@ par(mfcol = c(1, 1))
 j0 <- "GrLivArea"
 
 # Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+x0 <- seq(min(data[, j0], na.rm = TRUE), max(data[, j0], na.rm = TRUE), length.out = 50)
 
 # Create a histogram for the entire column
-hist(data_train[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
+hist(data[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
 
 # Overlay normal distribution curve
-lines(x0, dnorm(x0, mean(data_train[, j0], na.rm = TRUE), sd(data_train[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
+lines(x0, dnorm(x0, mean(data[, j0], na.rm = TRUE), sd(data[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
 
 
 ``` 
@@ -1023,11 +1052,11 @@ par(mfrow = c(1, 1))
 j0 <- "GrLivArea"
 
 # Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+x0 <- seq(min(data[, j0], na.rm = TRUE), max(data[, j0], na.rm = TRUE), length.out = 50)
 
 # Create a quantile-quantile plot
-qqnorm(data_train[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
-qqline(data_train[, j0])
+qqnorm(data[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
+qqline(data[, j0])
 
 
 ```
@@ -1040,11 +1069,11 @@ The **null hypothesis** that the data **follow a univariate normal distribution*
 
 ```{r warning=FALSE, message=FALSE}
 
-# Assuming 'data_train' is your original data frame
-data_train_tidy <- melt(data_train, value.name = "value")
+# Assuming 'data' is your original data frame
+data_tidy <- melt(data, value.name = "value")
 
 # Use the aggregate function with the correct FUN argument
-result <- aggregate(value ~ variable, data = data_train_tidy,
+result <- aggregate(value ~ variable, data = data_tidy,
                     FUN = function(x) shapiro.test(x)$p.value)
 
 # Print the row corresponding to YearBuilt
@@ -1063,10 +1092,10 @@ describe(X1stFlrSF)
 
 # Histogram and density plots
 # Remember that package 'ggplot2' is required
-p1<-ggplot(data_train,aes(x=X1stFlrSF))+geom_density()+
+p1<-ggplot(data,aes(x=X1stFlrSF))+geom_density()+
   labs(title = "Density of 1stFlrSF",x="1stFlrSF",y="Values")
 
-p2<-ggplot(data_train,aes(x=X1stFlrSF))+geom_histogram()+
+p2<-ggplot(data,aes(x=X1stFlrSF))+geom_histogram()+
   labs(title = "Histogram of 1stFlrSF",x="1stFlrSF",y="Values")
 
 
@@ -1079,10 +1108,10 @@ ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
 
-na_counts <- sum(is.na(data_train$X1stFlrSF))
+na_counts <- sum(is.na(data$X1stFlrSF))
 
 print(na_counts)
-print(na_counts/nrow(data_train))
+print(na_counts/nrow(data))
 
 ```  
 
@@ -1092,7 +1121,7 @@ print(na_counts/nrow(data_train))
 
 ```{r warning=FALSE, message=FALSE}
 # Boxplot to visualize outliers
-p1 <- ggplot(data_train, aes(x = X1stFlrSF)) +
+p1 <- ggplot(data, aes(x = X1stFlrSF)) +
   geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
   coord_flip() +
   labs(title = "Boxplot of X1stFlrSF", x = "Values", y = "")
@@ -1100,13 +1129,13 @@ p1 <- ggplot(data_train, aes(x = X1stFlrSF)) +
 ggarrange(p1, nrow=1, common.legend = FALSE)
 
 # Count outliers
-outliers <- boxplot.stats(data_train$X1stFlrSF)$out
+outliers <- boxplot.stats(data$X1stFlrSF)$out
 
 # Display the count of outliers
 cat("Number of outliers:", length(outliers), "\n")
 
 # Identify rows with outliers
-outlier_rows <- which(data_train$X1stFlrSF %in% outliers)
+outlier_rows <- which(data$X1stFlrSF %in% outliers)
 
 # Print the indices of rows with outliers
 cat("Indices of rows with outliers:", outlier_rows, "\n")
@@ -1118,10 +1147,10 @@ There are 13 outliers, as there enough data records, we will eliminate them.
 ```{r warning=FALSE, message=FALSE}
 
 # Remove rows with outliers
-data_train <- data_train[-outlier_rows, ]
+data <- data[-outlier_rows, ]
 
 # Print a message after removing outliers
-cat("Outliers removed. New number of rows:", nrow(data_train), "\n")
+cat("Outliers removed. New number of rows:", nrow(data), "\n")
 
 ```
 
@@ -1136,13 +1165,13 @@ par(mfcol = c(1, 1))
 j0 <- "X1stFlrSF"
 
 # Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+x0 <- seq(min(data[, j0], na.rm = TRUE), max(data[, j0], na.rm = TRUE), length.out = 50)
 
 # Create a histogram for the entire column
-hist(data_train[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
+hist(data[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
 
 # Overlay normal distribution curve
-lines(x0, dnorm(x0, mean(data_train[, j0], na.rm = TRUE), sd(data_train[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
+lines(x0, dnorm(x0, mean(data[, j0], na.rm = TRUE), sd(data[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
 
 
 ``` 
@@ -1157,11 +1186,11 @@ par(mfrow = c(1, 1))
 j0 <- "X1stFlrSF"
 
 # Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+x0 <- seq(min(data[, j0], na.rm = TRUE), max(data[, j0], na.rm = TRUE), length.out = 50)
 
 # Create a quantile-quantile plot
-qqnorm(data_train[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
-qqline(data_train[, j0])
+qqnorm(data[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
+qqline(data[, j0])
 
 
 ```
@@ -1174,11 +1203,11 @@ The **null hypothesis** that the data **follow a univariate normal distribution*
 
 ```{r warning=FALSE, message=FALSE}
 
-# Assuming 'data_train' is your original data frame
-data_train_tidy <- melt(data_train, value.name = "value")
+# Assuming 'data' is your original data frame
+data_tidy <- melt(data, value.name = "value")
 
 # Use the aggregate function with the correct FUN argument
-result <- aggregate(value ~ variable, data = data_train_tidy,
+result <- aggregate(value ~ variable, data = data_tidy,
                     FUN = function(x) shapiro.test(x)$p.value)
 
 # Print the row corresponding to X1stFlrSF
@@ -1199,10 +1228,10 @@ describe(X2ndFlrSF)
 
 # Histogram and density plots
 # Remember that package 'ggplot2' is required
-p1<-ggplot(data_train,aes(x=X2ndFlrSF))+geom_density()+
+p1<-ggplot(data,aes(x=X2ndFlrSF))+geom_density()+
   labs(title = "Density of X2ndFlrSF",x="X2ndFlrSF",y="Values")
 
-p2<-ggplot(data_train,aes(x=X2ndFlrSF))+geom_histogram()+
+p2<-ggplot(data,aes(x=X2ndFlrSF))+geom_histogram()+
   labs(title = "Histogram of X2ndFlrSF",x="X2ndFlrSF",y="Values")
 
 
@@ -1215,10 +1244,10 @@ ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
 
-na_counts <- sum(is.na(data_train$X2ndFlrSF))
+na_counts <- sum(is.na(data$X2ndFlrSF))
 
 print(na_counts)
-print(na_counts/nrow(data_train))
+print(na_counts/nrow(data))
 
 ```  
 
@@ -1228,7 +1257,7 @@ print(na_counts/nrow(data_train))
 
 ```{r warning=FALSE, message=FALSE}
 # Boxplot to visualize outliers
-p1 <- ggplot(data_train, aes(x = X2ndFlrSF)) +
+p1 <- ggplot(data, aes(x = X2ndFlrSF)) +
   geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
   coord_flip() +
   labs(title = "Boxplot of X2ndFlrSF", x = "Values", y = "")
@@ -1236,13 +1265,13 @@ p1 <- ggplot(data_train, aes(x = X2ndFlrSF)) +
 ggarrange(p1, nrow=1, common.legend = FALSE)
 
 # Count outliers
-outliers <- boxplot.stats(data_train$X2ndFlrSF)$out
+outliers <- boxplot.stats(data$X2ndFlrSF)$out
 
 # Display the count of outliers
 cat("Number of outliers:", length(outliers), "\n")
 
 # Identify rows with outliers
-outlier_rows <- which(data_train$X2ndFlrSF %in% outliers)
+outlier_rows <- which(data$X2ndFlrSF %in% outliers)
 
 # Print the indices of rows with outliers
 cat("Indices of rows with outliers:", outlier_rows, "\n")
@@ -1262,13 +1291,13 @@ par(mfcol = c(1, 1))
 j0 <- "X2ndFlrSF"
 
 # Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+x0 <- seq(min(data[, j0], na.rm = TRUE), max(data[, j0], na.rm = TRUE), length.out = 50)
 
 # Create a histogram for the entire column
-hist(data_train[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
+hist(data[, j0], prob = TRUE, col = grey(0.8), main = paste("Histogram of", j0), xlab = j0)
 
 # Overlay normal distribution curve
-lines(x0, dnorm(x0, mean(data_train[, j0], na.rm = TRUE), sd(data_train[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
+lines(x0, dnorm(x0, mean(data[, j0], na.rm = TRUE), sd(data[, j0], na.rm = TRUE)), col = "blue", lwd = 2)
 
 
 ``` 
@@ -1283,11 +1312,11 @@ par(mfrow = c(1, 1))
 j0 <- "X2ndFlrSF"
 
 # Set the sequence for the x-axis
-x0 <- seq(min(data_train[, j0], na.rm = TRUE), max(data_train[, j0], na.rm = TRUE), length.out = 50)
+x0 <- seq(min(data[, j0], na.rm = TRUE), max(data[, j0], na.rm = TRUE), length.out = 50)
 
 # Create a quantile-quantile plot
-qqnorm(data_train[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
-qqline(data_train[, j0])
+qqnorm(data[, j0], main = paste("Q-Q Plot of", j0), pch = 19, col = 2)
+qqline(data[, j0])
 
 
 ```
@@ -1300,11 +1329,11 @@ The **null hypothesis** that the data **follow a univariate normal distribution*
 
 ```{r warning=FALSE, message=FALSE}
 
-# Assuming 'data_train' is your original data frame
-data_train_tidy <- melt(data_train, value.name = "value")
+# Assuming 'data' is your original data frame
+data_tidy <- melt(data, value.name = "value")
 
 # Use the aggregate function with the correct FUN argument
-result <- aggregate(value ~ variable, data = data_train_tidy,
+result <- aggregate(value ~ variable, data = data_tidy,
                     FUN = function(x) shapiro.test(x)$p.value)
 
 # Print the row corresponding to X2ndFlrSF
@@ -1326,10 +1355,10 @@ describe(YrSold)
 
 # Histogram and density plots
 # Remember that package 'ggplot2' is required
-p1<-ggplot(data_train,aes(x=YrSold))+geom_density()+
+p1<-ggplot(data,aes(x=YrSold))+geom_density()+
   labs(title = "Density of YrSold",x="YrSold",y="Values")
 
-p2<-ggplot(data_train,aes(x=YrSold))+geom_histogram()+
+p2<-ggplot(data,aes(x=YrSold))+geom_histogram()+
   labs(title = "Histogram of YrSold",x="YrSold",y="Values")
 
 
@@ -1342,10 +1371,10 @@ ggarrange(p1,p2, nrow=1, common.legend = FALSE)
 ```{r warning=FALSE, message=FALSE}
 # Missing Values
 
-na_counts <- sum(is.na(data_train$YrSold))
+na_counts <- sum(is.na(data$YrSold))
 
 print(na_counts)
-print(na_counts/nrow(data_train))
+print(na_counts/nrow(data))
 
 ```  
 
@@ -1355,7 +1384,7 @@ print(na_counts/nrow(data_train))
 
 ```{r warning=FALSE, message=FALSE}
 # Boxplot to visualize outliers
-p1 <- ggplot(data_train, aes(x = YrSold)) +
+p1 <- ggplot(data, aes(x = YrSold)) +
   geom_boxplot(outlier.colour = "red", outlier.shape = 1, outlier.size = 2) +
   coord_flip() +
   labs(title = "Boxplot of YrSold", x = "Values", y = "")
@@ -1363,13 +1392,13 @@ p1 <- ggplot(data_train, aes(x = YrSold)) +
 ggarrange(p1, nrow=1, common.legend = FALSE)
 
 # Count outliers
-outliers <- boxplot.stats(data_train$YrSold)$out
+outliers <- boxplot.stats(data$YrSold)$out
 
 # Display the count of outliers
 cat("Number of outliers:", length(outliers), "\n")
 
 # Identify rows with outliers
-outlier_rows <- which(data_train$YrSold %in% outliers)
+outlier_rows <- which(data$YrSold %in% outliers)
 
 # Print the indices of rows with outliers
 cat("Indices of rows with outliers:", outlier_rows, "\n")
@@ -1392,9 +1421,9 @@ SaleType: Type of sale
 freq(SaleType)
 
 # Pie chart and bar graph
-p1<-ggplot(data_train, aes(x=factor(1), fill = SaleType))+geom_bar()+
+p1<-ggplot(data, aes(x=factor(1), fill = SaleType))+geom_bar()+
   coord_polar("y")+labs(x="SaleType",y="%")
-p2<-ggplot(data_train, aes(x=factor(1), fill = SaleType))+geom_bar()+
+p2<-ggplot(data, aes(x=factor(1), fill = SaleType))+geom_bar()+
   labs(x="SaleType",y="%")
 
 # This function controls the graphical output device
@@ -1415,9 +1444,9 @@ SaleCondition: Condition of sale
 freq(SaleCondition)
 
 # Pie chart and bar graph
-p1<-ggplot(data_train, aes(x=factor(1), fill = SaleCondition))+geom_bar()+
+p1<-ggplot(data, aes(x=factor(1), fill = SaleCondition))+geom_bar()+
   coord_polar("y")+labs(x="SaleCondition",y="%")
-p2<-ggplot(data_train, aes(x=factor(1), fill = SaleCondition))+geom_bar()+
+p2<-ggplot(data, aes(x=factor(1), fill = SaleCondition))+geom_bar()+
   labs(x="SaleCondition",y="%")
 
 # This function controls the graphical output device
@@ -1437,10 +1466,31 @@ describe(SalePrice)
 
 # Histogram and density plots
 # Remember that package 'ggplot2' is required
-p1<-ggplot(data_train,aes(x=SalePrice))+geom_density()+
+p1<-ggplot(data,aes(x=SalePrice))+geom_density()+
   labs(title = "Density of SalePrice",x="SalePrice",y="Values")
 
-p2<-ggplot(data_train,aes(x=SalePrice))+geom_histogram()+
+p2<-ggplot(data,aes(x=SalePrice))+geom_histogram()+
+  labs(title = "Histogram of SalePrice",x="SalePrice",y="Values")
+
+
+# This function controls the graphical output device
+# Remember that package 'ggpubr' is required
+ggarrange(p1,p2, nrow=1, common.legend = FALSE)
+
+``` 
+
+We can perform a log transformation to correct the skewness of the variable
+
+```{r warning=FALSE, message=FALSE}
+# Classical numeric descriptive analysis
+describe(log(SalePrice))
+
+# Histogram and density plots
+# Remember that package 'ggplot2' is required
+p1<-ggplot(data,aes(x=log(SalePrice)))+geom_density()+
+  labs(title = "Density of SalePrice",x="SalePrice",y="Values")
+
+p2<-ggplot(data,aes(x=log(SalePrice)))+geom_histogram()+
   labs(title = "Histogram of SalePrice",x="SalePrice",y="Values")
 
 
@@ -1456,47 +1506,47 @@ We will split this target variable into two categories (intervals) of equal ampl
 ```{r warning=FALSE, message=FALSE}
 
 # Dividir SalePrice en dos grupos de igual frecuencia
-data_train$PriceCategory <- ntile(data_train$SalePrice, 2)
+data$PriceCategory <- ntile(data$SalePrice, 2)
 
 # Asignar nombres a las categorías
-data_train$PriceCategory <- ifelse(data_train$PriceCategory == 1, "Cheap", "Expensive")
+data$PriceCategory <- ifelse(data$PriceCategory == 1, "Cheap", "Expensive")
 
 # Resto del código para análisis descriptivo y gráficos
-describe(data_train$SalePrice)
+describe(data$SalePrice)
 
-p1 <- ggplot(data_train, aes(x = SalePrice)) + 
+p1 <- ggplot(data, aes(x = SalePrice)) + 
       geom_density() + 
       labs(title = "Density of SalePrice", x = "SalePrice", y = "Density")
 
-p2 <- ggplot(data_train, aes(x = SalePrice)) + 
+p2 <- ggplot(data, aes(x = SalePrice)) + 
       geom_histogram(bins = 30) + 
       labs(title = "Histogram of SalePrice", x = "SalePrice", y = "Count")
 
 ggarrange(p1, p2, nrow = 1, common.legend = FALSE)
 
 # Verificar la nueva variable
-table(data_train$PriceCategory)
+table(data$PriceCategory)
 
 
 ``` 
 
 ```{r warning=FALSE, message=FALSE}
 # Drop the SalePrice variable
-data_train <- select(data_train, -SalePrice)
+data <- select(data, -SalePrice)
 
 # To verify that the column has been removed, you can view the structure of the dataframe
-str(data_train)
+str(data)
 ```
 
 ```{r warning=FALSE, message=FALSE}
 # Basic descriptive statistics
 # Remember that package 'summarytools' is required
-freq(data_train$PriceCategory)
+freq(data$PriceCategory)
 
 # Pie chart and bar graph
-p1<-ggplot(data_train, aes(x=factor(1), fill = PriceCategory))+geom_bar()+
+p1<-ggplot(data, aes(x=factor(1), fill = PriceCategory))+geom_bar()+
   coord_polar("y")+labs(x="SaleType",y="%")
-p2<-ggplot(data_train, aes(x=factor(1), fill = PriceCategory))+geom_bar()+
+p2<-ggplot(data, aes(x=factor(1), fill = PriceCategory))+geom_bar()+
   labs(x="PriceCategory",y="%")
 
 # This function controls the graphical output device
@@ -1527,10 +1577,10 @@ According to the numerical results below, it is observed that the data **are cor
 ###############################
 
 # Select only numeric columns
-numeric_data_train <- data_train[sapply(data_train, is.numeric)]
+numeric_data <- data[sapply(data, is.numeric)]
 
 # Are the variables correlated at sample level?
-correlation_matrix <- cor(numeric_data_train)
+correlation_matrix <- cor(numeric_data)
 
 # Display the first 6x6 portion of the correlation matrix
 correlation_matrix
@@ -1551,10 +1601,10 @@ det(correlation_matrix)
 # This function works with standardized data.
 
 # Standardization
-numeric_data_train_scale<-scale(numeric_data_train)
+numeric_data_scale<-scale(numeric_data)
 
 # Bartlett's sphericity test
-cortest.bartlett(cor(numeric_data_train_scale))
+cortest.bartlett(cor(numeric_data_scale))
 
 ```
 
@@ -1565,14 +1615,14 @@ Different graphical outputs are illustrated below that provide an intuitive idea
 
 # Polychoric correlation matrix
 # Remember that package 'polycor' is required for 'hetcor' function
-poly_cor<-hetcor(numeric_data_train)$correlations
+poly_cor<-hetcor(numeric_data)$correlations
 
 # Remember that package 'ggcorrplot' is required for 'ggcorrplot' function
 ggcorrplot(poly_cor, type="lower",hc.order=T)
 
 # Another interesting visual representation is the following
 # Remember that package 'corrplot' is required for 'corrplot' function
-corrplot(cor(numeric_data_train), order = "hclust", tl.col='black', tl.cex=1)
+corrplot(cor(numeric_data), order = "hclust", tl.col='black', tl.cex=1)
 
 
 
@@ -1592,7 +1642,7 @@ Done in previous sections.
 
 # The 'prcomp' function in the base R package performs this analysis
 # Parameters 'scale' and 'center' are set to TRUE to consider standardized data
-PCA<-prcomp(numeric_data_train, scale=T, center = T)
+PCA<-prcomp(numeric_data, scale=T, center = T)
 
 # The field 'rotation' of the 'PCA' object is a matrix 
 # Its columns are the coefficients of the principal components
@@ -1869,7 +1919,7 @@ Another way to do the previous analysis.
 
 # Remember that package 'stats' is required for 'factanal' function
 # This function only performs the mle method
-FA<-factanal(numeric_data_train,factors=3, rotation="varimax")
+FA<-factanal(numeric_data,factors=3, rotation="varimax")
 FA$loadings
 
 
@@ -1885,11 +1935,11 @@ FA$loadings
 
 
 # Royston multivariate normality test
-royston_test <- mvn(data = numeric_data_train, mvnTest = "royston", multivariatePlot = "qq")
+royston_test <- mvn(data = numeric_data, mvnTest = "royston", multivariatePlot = "qq")
 royston_test$multivariateNormality
 
 # Henze-Zirkler multivariate normality test
-hz_test <- mvn(data = numeric_data_train, mvnTest = "hz")
+hz_test <- mvn(data = numeric_data, mvnTest = "hz")
 hz_test$multivariateNormality
 
 ```
@@ -1907,15 +1957,15 @@ In this example, **we will work with a partition of the dataset, as a training s
 ```{r warning=FALSE, message=FALSE}
 
 # The response variable has to be an object of the class 'factor' of R language
-data_train$PriceCategory<-as.factor(data_train$PriceCategory)
+data$PriceCategory<-as.factor(data$PriceCategory)
 
 
 set.seed(3)
 
 # Partitioning the dataset: training (80%) + test (20%)
-trainIndex<-createDataPartition(data_train$PriceCategory,p=0.80)$Resample
-datos_train<-data_train[trainIndex,]
-datos_test<-data_train[-trainIndex,]
+trainIndex<-createDataPartition(data$PriceCategory,p=0.80)$Resample
+datos_train<-data[trainIndex,]
+datos_test<-data[-trainIndex,]
 
 datos_train
 datos_test
@@ -2122,7 +2172,7 @@ cat("PPV:", PPV, "\n",
 
 ```{r warning=FALSE, message=FALSE}
 
-distance<- get_dist(numeric_data_train)
+distance<- get_dist(numeric_data)
 fviz_dist(distance, gradient = list(low ="yellow", mid = "white", high = "brown"))
 
 ```
@@ -2136,7 +2186,7 @@ Below it will be illustrated how the groups are defined by the number of vertica
 
 ```{r warning=FALSE, message=FALSE}
 
-dendrogram <- hclust(dist(numeric_data_train, method = 'euclidean'), method = 'ward.D')
+dendrogram <- hclust(dist(numeric_data, method = 'euclidean'), method = 'ward.D')
 ggdendrogram(dendrogram, rotate = FALSE, labels = FALSE, theme_dendro = TRUE) + 
   labs(title = "Dendrograma")
 
@@ -2154,7 +2204,7 @@ For this first example the *kmeans* function builds two clusters.
 
 ```{r warning=FALSE, message=FALSE}
 
-k2 <- kmeans(numeric_data_train, centers = 2, nstart = 25)
+k2 <- kmeans(numeric_data, centers = 2, nstart = 25)
 
 # Displaying all the fields of the object k2
 str(k2)
@@ -2182,7 +2232,7 @@ k2
 
 ```{r warning=FALSE, message=FALSE}
 
-fviz_cluster(k2,data=numeric_data_train)
+fviz_cluster(k2,data=numeric_data)
 
 ```
 
@@ -2190,7 +2240,7 @@ fviz_cluster(k2,data=numeric_data_train)
 ```{r}
 
 set.seed(123)
-fviz_nbclust(numeric_data_train, kmeans, method = "wss")
+fviz_nbclust(numeric_data, kmeans, method = "wss")
 
 ```
 
@@ -2220,10 +2270,10 @@ fviz_gap_stat(gap_stat)
 ```{r warning=FALSE, message=FALSE}
 
 # Agregar las etiquetas de cluster al conjunto de datos original (asegúrate de que las filas coincidan)
-data_train$Cluster <- k2$cluster
+data$Cluster <- k2$cluster
 
 # Crear una tabla cruzada para comparar los clusters con PriceCategory
-table(data_train$PriceCategory, data_train$Cluster)
+table(data$PriceCategory, data$Cluster)
 
 ```
 
@@ -2232,7 +2282,7 @@ It coincides in the majority of the examples.
 
 ```{r warning=FALSE, message=FALSE}
 
-adjusted_rand_index <- adjustedRandIndex(data_train$PriceCategory, data_train$Cluster)
+adjusted_rand_index <- adjustedRandIndex(data$PriceCategory, data$Cluster)
 print(adjusted_rand_index)
 
 ```
