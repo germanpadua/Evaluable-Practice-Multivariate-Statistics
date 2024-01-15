@@ -31,7 +31,38 @@ output:
 FALTA
 
 # Introduction
-
+Price research within the housing market stands as a pivotal compass guiding numerous stake-
+holders – buyers, sellers, investors and policymakers. The dynamics of property prices encapsulate
+a multitude of intricate factors, dictating not just market trends but also reflecting the societal,
+economic and geographical characteristics of a region. In this vein, the Ames Housing Dataset as-
+sumes significance as a comprehensive repository, offering a nuanced lens into the complex tapestry
+of housing attributes and sale prices in Ames, Iowa.
+The study analysis a subset of the original dataset. It is important to underscore that while the
+chosen variables offer a glimpse into critical housing attributes, their selection was driven primarily
+by practical constraints of time and feasibility. The chosen variables predominantly orbit around
+the intrinsic aspects of properties – encompassing dimensions such as property quality, condition,
+size measurements and temporal data. This focus within the dataset allows to unravel the essence
+of housing valuations through an inspection of individual property features, steering the analytical
+spotlight away from broader neighborhood influences.
+In pursuit of this understanding, this study harnesses a blend of univariate and multivariate
+analytical techniques within the R programming environment. The numerical analyses is accom-
+panied by graphical visualization.
+The initial phase of the analysis involves a univariate examination of the chosen variables. This
+step encompasses the scrutiny of missing data, classical numeric descriptive analysis, outlier detec-
+tion and the assessment of normality assumptions. This step-by-step dissection offers a foundational
+understanding of the individual behaviors and distributions of these critical housing attributes.
+Subsequently, the study transitions into a multivariate analysis, delving deeper into the complex
+interplay of these chosen variables. Employing correlation studies, the aim is to unveil intricate rela-
+tionships and potential interdependencies among these property-specific attributes and the ultimate
+sale prices. Dimensionality reduction techniques, such as Principal Component Analysis (PCA),
+will be employed to distill the essence of these variables, potentially uncovering latent factors that
+collectively contribute to housing valuations. Additionally, there is a contemplation of employing
+clustering algorithms to identify possible groupings or patterns within the dataset.
+The core objective of this research is deeply understand the nuanced relationships between
+property attributes and sale prices themselves. By prioritizing this understanding, the study aims
+to reveal the most significant variables, those attributes that exhibit the strongest association or
+influence on housing sale prices within the local Ames real estate market. It is also aimed to
+construct classification methods in order to predict housing sale prices.
 
 **Loading/installation** of R packages necessary for this practice.
 
@@ -1935,11 +1966,11 @@ FA$loadings
 
 
 # Royston multivariate normality test
-royston_test <- mvn(data = numeric_data, mvnTest = "royston", multivariatePlot = "qq")
+royston_test <- MVN::mvn(data = numeric_data, mvnTest = "royston", multivariatePlot = "qq")
 royston_test$multivariateNormality
 
 # Henze-Zirkler multivariate normality test
-hz_test <- mvn(data = numeric_data, mvnTest = "hz")
+hz_test <- MVN::mvn(data = numeric_data, mvnTest = "hz")
 hz_test$multivariateNormality
 
 ```
@@ -2248,7 +2279,7 @@ fviz_nbclust(numeric_data, kmeans, method = "wss")
 ```{r}
 
 set.seed(123)
-fviz_nbclust(df, kmeans, method = "silhouette")
+fviz_nbclust(numeric_data, kmeans, method = "silhouette")
 
 ```
 
@@ -2256,7 +2287,7 @@ fviz_nbclust(df, kmeans, method = "silhouette")
 ```{r}
 
 set.seed(123)
-gap_stat <- clusGap(df, FUN = kmeans, nstart = 25,K.max = 10, B = 50)
+gap_stat <- clusGap(numeric_data, FUN = kmeans, nstart = 25,K.max = 10, B = 50)
 fviz_gap_stat(gap_stat)
 
 ```
