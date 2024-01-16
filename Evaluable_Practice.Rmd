@@ -3,10 +3,6 @@ title: "Evaluable Practice"
 author: "Pedro Jiménez García-Ligero, Álvaro Luna Ramírez, Nerea Alberdi Arrillaga and Germán José Padua Pleguezuelo"
 date: "`r Sys.Date()`"
 output:
-  pdf_document: default
-  word_document:
-    toc: yes
-    toc_depth: '6'
   html_document:
     df_print: paged
     toc: yes
@@ -15,6 +11,10 @@ output:
     toc_float:
       collapsed: yes
       smooth_scroll: no
+  word_document:
+    toc: yes
+    toc_depth: '6'
+  pdf_document: default
 ---
 <style>
 .math {
@@ -27,42 +27,18 @@ output:
 © This material is licensed under a **Creative Commons CC BY-NC-ND** attribution which allows *works to be downloaded and shared with others, as long as they are referenced, but may not be modified in any way or used commercially*.
 
 
-# Index
-FALTA
-
 # Introduction
-Price research within the housing market stands as a pivotal compass guiding numerous stake-
-holders – buyers, sellers, investors and policymakers. The dynamics of property prices encapsulate
-a multitude of intricate factors, dictating not just market trends but also reflecting the societal,
-economic and geographical characteristics of a region. In this vein, the Ames Housing Dataset as-
-sumes significance as a comprehensive repository, offering a nuanced lens into the complex tapestry
-of housing attributes and sale prices in Ames, Iowa.
-The study analysis a subset of the original dataset. It is important to underscore that while the
-chosen variables offer a glimpse into critical housing attributes, their selection was driven primarily
-by practical constraints of time and feasibility. The chosen variables predominantly orbit around
-the intrinsic aspects of properties – encompassing dimensions such as property quality, condition,
-size measurements and temporal data. This focus within the dataset allows to unravel the essence
-of housing valuations through an inspection of individual property features, steering the analytical
-spotlight away from broader neighborhood influences.
-In pursuit of this understanding, this study harnesses a blend of univariate and multivariate
-analytical techniques within the R programming environment. The numerical analyses is accom-
-panied by graphical visualization.
-The initial phase of the analysis involves a univariate examination of the chosen variables. This
-step encompasses the scrutiny of missing data, classical numeric descriptive analysis, outlier detec-
-tion and the assessment of normality assumptions. This step-by-step dissection offers a foundational
-understanding of the individual behaviors and distributions of these critical housing attributes.
-Subsequently, the study transitions into a multivariate analysis, delving deeper into the complex
-interplay of these chosen variables. Employing correlation studies, the aim is to unveil intricate rela-
-tionships and potential interdependencies among these property-specific attributes and the ultimate
-sale prices. Dimensionality reduction techniques, such as Principal Component Analysis (PCA),
-will be employed to distill the essence of these variables, potentially uncovering latent factors that
-collectively contribute to housing valuations. Additionally, there is a contemplation of employing
-clustering algorithms to identify possible groupings or patterns within the dataset.
-The core objective of this research is deeply understand the nuanced relationships between
-property attributes and sale prices themselves. By prioritizing this understanding, the study aims
-to reveal the most significant variables, those attributes that exhibit the strongest association or
-influence on housing sale prices within the local Ames real estate market. It is also aimed to
-construct classification methods in order to predict housing sale prices.
+Price research within the housing market stands as a pivotal compass guiding numerous stake-holders – buyers, sellers, investors and policymakers. The dynamics of property prices encapsulate a multitude of intricate factors, dictating not just market trends but also reflecting the societal, economic and geographical characteristics of a region. In this vein, the Ames Housing Dataset assumes significance as a comprehensive repository, offering a nuanced lens into the complex tapestry of housing attributes and sale prices in Ames, Iowa.
+
+The study analysis a subset of the original dataset. It is important to underscore that while the chosen variables offer a glimpse into critical housing attributes, their selection was driven primarily by practical constraints of time and feasibility. The chosen variables predominantly orbit around the intrinsic aspects of properties – encompassing dimensions such as property quality, condition, size measurements and temporal data. This focus within the dataset allows to unravel the essence of housing valuations through an inspection of individual property features, steering the analytical spotlight away from broader neighborhood influences.
+
+In pursuit of this understanding, this study harnesses a blend of univariate and multivariate analytical techniques within the R programming environment. The numerical analyses is accompanied by graphical visualization.
+
+The initial phase of the analysis involves a univariate examination of the chosen variables. This step encompasses the scrutiny of missing data, classical numeric descriptive analysis, outlier detection and the assessment of normality assumptions. This step-by-step dissection offers a foundational understanding of the individual behaviors and distributions of these critical housing attributes.
+
+Subsequently, the study transitions into a multivariate analysis, delving deeper into the complex interplay of these chosen variables. Employing correlation studies, the aim is to unveil intricate relationships and potential interdependencies among these property-specific attributes and the ultimate sale prices. Dimensionality reduction techniques, such as Principal Component Analysis (PCA), will be employed to distill the essence of these variables, potentially uncovering latent factors that collectively contribute to housing valuations. Additionally, there is a contemplation of employing clustering algorithms to identify possible groupings or patterns within the dataset.
+
+The core objective of this research is deeply understand the nuanced relationships between property attributes and sale prices themselves. By prioritizing this understanding, the study aims to reveal the most significant variables, those attributes that exhibit the strongest association or influence on housing sale prices within the local Ames real estate market. It is also aimed to construct classification methods in order to predict housing sale prices.
 
 **Loading/installation** of R packages necessary for this practice.
 
@@ -1047,9 +1023,18 @@ cat("Outliers removed. New number of rows:", nrow(data), "\n")
 
 ``` 
 
+```{r}
+print(length(unique(data$GarageQual_numeric)))
+```
 
-### Assumption of Normality
-It isn't a continuous variable so we skip this step.
+Since removing the outliers results in a degenerated variable, we  will remove it from the data, as it will
+not provide any new information in order to classify the sale price.
+
+```{r}
+# Drop the GarageQual_numeric variable
+data <- select(data, -GarageQual_numeric)
+```
+
 
 ## GrLivArea
 Above grade (ground) living area square feet
@@ -1170,21 +1155,14 @@ The **null hypothesis** that the data **follow a univariate normal distribution*
 
 ```{r warning=FALSE, message=FALSE}
 
+# Print the row corresponding to GrLivArea
+print(subset(result, variable == "GrLivArea"))
+
 data_tidy <- melt(data, value.name = "value")
-head(data_tidy)
+
 # Use the aggregate function with the correct FUN argument
 result <- aggregate(value ~ variable, data = data_tidy,
-                    FUN = function(x) {
-                      # Check if all values are identical
-                      if (length(unique(x)) == 1) {
-                        # Con esto vemos que el problema se debe a lo realizado anteriormente.
-                        # Hemos añadido una variable GarageQual_numeric, la cual vale constantemente 3
-                        # al quitarle los outliers.
-                        print(x)
-                      } else {
-                        return(shapiro.test(x)$p.value)
-                      }
-                    })
+                    FUN = function(x) shapiro.test(x)$p.value)
 
 # Print the row corresponding to GrLivArea
 print(subset(result, variable == "GrLivArea"))
@@ -2070,7 +2048,7 @@ datos_test
 The **lda** function of the **MASS** package adjusts this model.
 
 ```{r warning=FALSE, message=FALSE}
-modelo_lda <- lda(formula = PriceCategory ~ LotFrontage + MSSubClass + MSZoning + ExterQual + ExterCond + GarageQual_numeric + SaleType + SaleCondition + LotArea + OverallQual + OverallCond + YearBuilt + GrLivArea + X1stFlrSF + X2ndFlrSF + YrSold ,data = datos_train)
+modelo_lda <- lda(formula = PriceCategory ~ LotFrontage + MSSubClass + MSZoning + ExterQual + ExterCond + SaleType + SaleCondition + LotArea + OverallQual + OverallCond + YearBuilt + GrLivArea + X1stFlrSF + X2ndFlrSF + YrSold ,data = datos_train)
 modelo_lda
 
 ```
@@ -2356,12 +2334,6 @@ fviz_gap_stat(gap_stat)
 
 ```
 
-```{r}
-
-
-
-```
-
 ```{r warning=FALSE, message=FALSE}
 
 # Agregar las etiquetas de cluster al conjunto de datos original (asegúrate de que las filas coincidan)
@@ -2381,10 +2353,9 @@ adjusted_rand_index <- adjustedRandIndex(data$PriceCategory, data$Cluster)
 print(adjusted_rand_index)
 
 ```
-´
- El valor del ARI es 0.06957727. El ARI es una medida de la similitud entre dos asignaciones de cluster (en este caso, tu variable PriceCategory y los clusters generados por K-means), ajustada por la posibilidad de coincidencia aleatoria. Los valores de ARI pueden variar entre -1 y 1, donde:
 
-Un valor de 1 indica una coincidencia perfecta entre los dos agrupamientos.
-Un valor de 0 indica una coincidencia no mejor que la aleatoria.
-Un valor negativo indica una coincidencia peor que la aleatoria.
-En tu caso, un ARI de aproximadamente 0.07 sugiere que hay una pequeña coincidencia entre los clusters generados por K-means y la variable PriceCategory, pero esta coincidencia es ligeramente mejor que la aleatoria. Sin embargo, no es una coincidencia fuerte, lo que indica que la agrupación realizada por K-means no se alinea de manera significativa con las categorías de precios existentes.
+The ARI value is 0.06957727. ARI is a measure of similarity between 2 cluster assignments (in this case, your PriceCategory variable and the clusters generated by K-means), adjusted by the possibility of random coincidence. ARI values can range from -1 to 1, where:
+- ARI = 1 indicates a perfect match between the two groupings.
+- ARI = 0 indicates a match no better than random chance.
+- ARI < 0 indicates a worse match than random chance.
+In this case, an approximated value of 0.07 suggests that there's a slight match between the clusters generated by K-means and the PriceCategory variable, but this match is only slightly better than random chance. However, it is not a strong match, indicating that the clustering performed by K-means does not align significantly with the existing price categories.
