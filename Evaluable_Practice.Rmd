@@ -1722,7 +1722,6 @@ Done in previous sections.
 
 ```{r warning=FALSE, message=FALSE}
 
-# The 'prcomp' function in the base R package performs this analysis
 # Parameters 'scale' and 'center' are set to TRUE to consider standardized data
 PCA<-prcomp(numeric_data, scale=T, center = T)
 
@@ -1990,7 +1989,6 @@ Another way to do the previous analysis.
 
 ```{r warning=FALSE, message=FALSE}
 
-# Remember that package 'stats' is required for 'factanal' function
 # This function only performs the mle method
 FA<-factanal(numeric_data,factors=3, rotation="varimax")
 FA$loadings
@@ -2022,9 +2020,9 @@ We find evidence of a lack of multivariate normality at the 5% level.
 
 
 
-## Clasifier using linear discriminant analysis
+## Classifier using linear discriminant analysis
 
-We will work with a partition of the dataset, as a training set (80% of the data) on which we will perform the quadratic discriminant analysis, and another partition, as a test set (20%), with which we perform the validation of the model.
+We will work with a partition of the dataset, as a training set (80% of the data) on which we will perform the linear discriminant analysis, and another partition, as a test set (20%), with which we perform the validation of the model.
 
 
 ```{r warning=FALSE, message=FALSE}
@@ -2076,45 +2074,43 @@ paste("trainig_error=", trainig_error, "%")
 ```
 
 
-The **correct classifications rate is ???%**
+The **correct classifications rate is 94.11765%**.
 
 From a geometric point of view, linear discriminant analysis separates space using a straight line. 
 
-#### ROC curve
+### ROC curve
 ```{r warning=FALSE, message=FALSE}
 
-# Asegúrate de obtener las probabilidades predichas
 pred <- predict(object = modelo_lda, newdata = datos_test, type = "response")
 
-# Calcula la curva ROC usando las probabilidades y la clase verdadera
+# Computela ROC curve
 roc_curve <- roc(datos_test$PriceCategory, as.numeric(pred$posterior[,2]), levels = c("Cheap", "Expensive"))
 
-# Dibuja la curva ROC
-plot(roc_curve, main="Curva ROC para LDA", col="#1c61b6")
+# Plot ROC curve
+plot(roc_curve, main="ROC curve for LDA", col="#1c61b6")
 
-# Agrega línea diagonal (clasificador aleatorio)
+# Add diagonal line
 abline(0, 1, lty=2, col = "red")
 
-# Opcional: Calcula el área bajo la curva (AUC)
 auc(roc_curve)
 
 ```
 
 
-#### Validity measures
+### Validity measures
 
 ```{r warning=FALSE, message=FALSE}
 
-# Calcula la matriz de confusión
+# Compute confusion Matrix
 conf_mat <- confusionMatrix(pred$class, datos_test$PriceCategory)
 
-# Extrae los valores de TP, FP, TN, FN
+# Extract values TP, FP, TN, FN
 TP <- conf_mat$table[2,2]
 FP <- conf_mat$table[1,2]
 TN <- conf_mat$table[1,1]
 FN <- conf_mat$table[2,1]
 
-# Calcula las métricas
+# Compute metrics
 PPV <- TP / (TP + FP)  # Positive Predictive Value
 TPR <- TP / (TP + FN)  # True Positive Rate o Sensitivity
 TNR <- TN / (TN + FP)  # True Negative Rate o Specificity
@@ -2122,11 +2118,11 @@ F1 <- 2 * PPV * TPR / (PPV + TPR)  # F1 Score
 G_mean <- sqrt(TPR * TNR)  # G-mean
 Accuracy <- (TP + TN) / (TP + FP + FN + TN)  # Accuracy
 
-# Calcula AUC
+# Compute AUC
 roc_curve <- roc(datos_test$PriceCategory, as.numeric(pred$posterior[,2]), levels = c("Cheap", "Expensive"))
 AUC <- auc(roc_curve)
 
-# Imprime las métricas
+# Print metrics
 cat("PPV:", PPV, "\n",
     "TPR:", TPR, "\n",
     "TNR:", TNR, "\n",
@@ -2139,7 +2135,7 @@ cat("PPV:", PPV, "\n",
 
 
 
-### Classifier using quadratic discriminant analysis
+## Classifier using quadratic discriminant analysis
 
 
 
@@ -2154,9 +2150,11 @@ modelo_qda
 
 ```
 
+We haven't added the categorical values to the model because it threw an error (rank deficiency in group Cheap).
+
 The output of this object shows us the **prior probabilities** of each group, in this case 0.5 and the **means of each regressor per group**.
 
-Once the classifier is built, we can classify new data based on its measurements by simply calling the **predict** function. For example, **we are going to classify all the observations in the test dataset**.
+Once the classifier is built, we can classify new data based on its measurements by simply calling the **predict** function. **We are going to classify all the observations in the test dataset**.
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -2180,44 +2178,42 @@ paste("trainig_error=", trainig_error, "%")
 
 ```
 
-In this case the **correct classifications rate** is ???%.
+In this case the **correct classifications rate is 91.66667%**.
 
-#### ROC curve
+### ROC curve
 
 ```{r warning=FALSE, message=FALSE}
 
-# Asegúrate de obtener las probabilidades predichas
 pred <- predict(object = modelo_qda, newdata = datos_test, type = "response")
 
-# Calcula la curva ROC usando las probabilidades y la clase verdadera
+# Compute ROC curve
 roc_curve <- roc(datos_test$PriceCategory, as.numeric(pred$posterior[,2]), levels = c("Cheap", "Expensive"))
 
-# Dibuja la curva ROC
-plot(roc_curve, main="Curva ROC para LDA", col="#1c61b6")
+# Plot ROC curve
+plot(roc_curve, main="ROC curve for QDA", col="#1c61b6")
 
-# Agrega línea diagonal (clasificador aleatorio)
+# Add diagonal line
 abline(0, 1, lty=2, col = "red")
 
-# Opcional: Calcula el área bajo la curva (AUC)
 auc(roc_curve)
 
 ```
 
 
-#### Validity measures
+### Validity measures
 
 ```{r warning=FALSE, message=FALSE}
 
-# Calcula la matriz de confusión
+# Compute confusion Matrix
 conf_mat <- confusionMatrix(pred$class, datos_test$PriceCategory)
 
-# Extrae los valores de TP, FP, TN, FN
+# Extract values TP, FP, TN, FN
 TP <- conf_mat$table[2,2]
 FP <- conf_mat$table[1,2]
 TN <- conf_mat$table[1,1]
 FN <- conf_mat$table[2,1]
 
-# Calcula las métricas
+# Compute metrics
 PPV <- TP / (TP + FP)  # Positive Predictive Value
 TPR <- TP / (TP + FN)  # True Positive Rate o Sensitivity
 TNR <- TN / (TN + FP)  # True Negative Rate o Specificity
@@ -2225,11 +2221,11 @@ F1 <- 2 * PPV * TPR / (PPV + TPR)  # F1 Score
 G_mean <- sqrt(TPR * TNR)  # G-mean
 Accuracy <- (TP + TN) / (TP + FP + FN + TN)  # Accuracy
 
-# Calcula AUC
+# Compute AUC
 roc_curve <- roc(datos_test$PriceCategory, as.numeric(pred$posterior[,2]), levels = c("Cheap", "Expensive"))
 AUC <- auc(roc_curve)
 
-# Imprime las métricas
+# Print metrics
 cat("PPV:", PPV, "\n",
     "TPR:", TPR, "\n",
     "TNR:", TNR, "\n",
@@ -2241,7 +2237,7 @@ cat("PPV:", PPV, "\n",
 ```
 
 
-### Cluster Analysis
+## Cluster Analysis
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -2251,7 +2247,7 @@ fviz_dist(distance, gradient = list(low ="yellow", mid = "white", high = "brown"
 ```
 
 
-## **Hierarchical clustering**: Ward's method
+### Hierarchical clustering: Ward's method
 
 **Hierarchical clustering** is interested in finding a hierarchy based on the closeness or similarity of the data according to the distance considered. In the **agglomerative** case, we start from a group with the closest observations. The next closest pairs are then calculated and groups are generated in an ascending manner. This construction can be observed visually by means of a **dendrogram**.
 
@@ -2261,19 +2257,13 @@ Below it will be illustrated how the groups are defined by the number of vertica
 
 dendrogram <- hclust(dist(numeric_data, method = 'euclidean'), method = 'ward.D')
 ggdendrogram(dendrogram, rotate = FALSE, labels = FALSE, theme_dendro = TRUE) + 
-  labs(title = "Dendrograma")
+  labs(title = "Dendrogram")
 
 ```
 
 
 
-## **Non-hierarchical clustering**: K-means algorithm
-
-Click this [link](https://uc-r.github.io/kmeans_clustering) to see a detailed description of this algorithm.
-
-The R language implements the **K-means algorithm** with the function of the same name. This function receives as input parameters the data and the number of groupings to be performed (*centers* parameter). To address the problem of **choosing initial seed points** it incorporates the *nstart* parameter that tests multiple initial configurations and reports on the best one. For example, if *nstart = 25*, it will generate 25 initial configurations. The use of this parameter is recommended.
-
-For this first example the *kmeans* function builds two clusters.
+### Non-hierarchical clustering: K-means algorithm
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -2295,7 +2285,7 @@ The output provided by the *kmeans* function is a list of information, including
 * *size*: the number of observations in each cluster.
 
 
-When displaying the variable *k2* it is seen how the groupings result in 2 grouping sizes of 30 and 20 states. The centers of each group (means) in the four variables (Murder, Assault, UrbanPop, Rape) are also seen. And finally the group assignment for each observation (i.e., Alabama was assigned to group 2, Arkansas was assigned to group 1, etc.).
+When displaying the variable *k2* it is seen how the groupings result in 2.
 
 ```{r warning=FALSE, message=FALSE}
 k2
@@ -2336,10 +2326,10 @@ fviz_gap_stat(gap_stat)
 
 ```{r warning=FALSE, message=FALSE}
 
-# Agregar las etiquetas de cluster al conjunto de datos original (asegúrate de que las filas coincidan)
+# Add cluster's labels to the original dataset
 data$Cluster <- k2$cluster
 
-# Crear una tabla cruzada para comparar los clusters con PriceCategory
+# Create a table for comparing clusters and PriceCategory
 table(data$PriceCategory, data$Cluster)
 
 ```
