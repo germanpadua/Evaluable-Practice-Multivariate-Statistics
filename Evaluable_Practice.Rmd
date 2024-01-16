@@ -346,7 +346,7 @@ It is a continuous variable, so we will analyze the random pattern with a Studen
  
 #### Random pattern
 
-We analyze the random pattern. In order to do this, we will study the homogeneity according to groups NA and non NA with a chi squared independence test.
+We analyze the random pattern. In order to do this, we will study the homogeneity according to groups NA and non NA with a t-test.
  
 Null Hypothesis (H0): The null hypothesis in a t-test is that there is no significant difference between the means of the two groups.
 Alternative Hypothesis (H1): The alternative hypothesis is that the true difference in means is not equal to 0.
