@@ -1653,7 +1653,7 @@ First, we check the assumptions of correlation between variables with the Bartle
 
 ## Correlated variables
 
-According to the numerical results below, it is observed that the data **are correlated** both **at the sample level** (see correlation matrix) and **at the populacion level** (Bartlett's sphericity test is significant).
+According to the numerical results below, it is observed that the data **are correlated** both **at the sample level** (see correlation matrix) and **at the population level** (Bartlett's sphericity test is significant).
 
 ```{r warning=FALSE, message=FALSE}
 
