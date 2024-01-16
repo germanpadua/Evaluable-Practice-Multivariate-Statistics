@@ -982,9 +982,8 @@ garage_qual_mapping <- c(TA = 3, Po = 1, Gd = 4, Fa = 2, Ex = 5)
 data <- data %>% 
   mutate(GarageQual_numeric = ifelse(is.na(GarageQual), 0, garage_qual_mapping[as.character(GarageQual)]))
 
-# Remove the original GarageQual variable
-data <- data %>%
-  select(-GarageQual)
+# Drop the GarageQual variable
+data <- select(data, -GarageQual)
 
 # Check the transformed data
 print(data$GarageQual_numeric)
@@ -1171,22 +1170,30 @@ The **null hypothesis** that the data **follow a univariate normal distribution*
 
 ```{r warning=FALSE, message=FALSE}
 
-# Assuming 'data' is your original data frame
 data_tidy <- melt(data, value.name = "value")
-
+head(data_tidy)
 # Use the aggregate function with the correct FUN argument
 result <- aggregate(value ~ variable, data = data_tidy,
-                    FUN = function(x) shapiro.test(x)$p.value)
+                    FUN = function(x) {
+                      # Check if all values are identical
+                      if (length(unique(x)) == 1) {
+                        # Con esto vemos que el problema se debe a lo realizado anteriormente.
+                        # Hemos añadido una variable GarageQual_numeric, la cual vale constantemente 3
+                        # al quitarle los outliers.
+                        print(x)
+                      } else {
+                        return(shapiro.test(x)$p.value)
+                      }
+                    })
 
-# Print the row corresponding to YearBuilt
+# Print the row corresponding to GrLivArea
 print(subset(result, variable == "GrLivArea"))
-
 ```
 
 **There is evidence of lack of univariate normality**  (p-value < 0.05).
 
 
-## 1stFlrSF
+## X1stFlrSF
 First Floor square feet 
 
 
@@ -1197,10 +1204,10 @@ describe(X1stFlrSF)
 
 # Histogram and density plots
 p1<-ggplot(data,aes(x=X1stFlrSF))+geom_density()+
-  labs(title = "Density of 1stFlrSF",x="1stFlrSF",y="Values")
+  labs(title = "Density of X1stFlrSF",x="X1stFlrSF",y="Values")
 
 p2<-ggplot(data,aes(x=X1stFlrSF))+geom_histogram()+
-  labs(title = "Histogram of 1stFlrSF",x="1stFlrSF",y="Values")
+  labs(title = "Histogram of X1stFlrSF",x="X1stFlrSF",y="Values")
 
 
 # This function controls the graphical output device
@@ -1306,7 +1313,6 @@ The **null hypothesis** that the data **follow a univariate normal distribution*
 
 ```{r warning=FALSE, message=FALSE}
 
-# Assuming 'data' is your original data frame
 data_tidy <- melt(data, value.name = "value")
 
 # Use the aggregate function with the correct FUN argument
@@ -1432,16 +1438,16 @@ The **null hypothesis** that the data **follow a univariate normal distribution*
 
 ```{r warning=FALSE, message=FALSE}
 
-# Assuming 'data' is your original data frame
+# Melt the data
 data_tidy <- melt(data, value.name = "value")
 
-# Use the aggregate function with the correct FUN argument
 result <- aggregate(value ~ variable, data = data_tidy,
                     FUN = function(x) shapiro.test(x)$p.value)
 
 # Print the row corresponding to X2ndFlrSF
 print(subset(result, variable == "X2ndFlrSF"))
 
+print(result)
 ```
 
 **There is evidence of lack of univariate normality**  (p-value < 0.05).
@@ -1647,7 +1653,7 @@ freq(data$PriceCategory)
 
 # Pie chart and bar graph
 p1<-ggplot(data, aes(x=factor(1), fill = PriceCategory))+geom_bar()+
-  coord_polar("y")+labs(x="SaleType",y="%")
+  coord_polar("y")+labs(x="PriceCategory",y="%")
 p2<-ggplot(data, aes(x=factor(1), fill = PriceCategory))+geom_bar()+
   labs(x="PriceCategory",y="%")
 
